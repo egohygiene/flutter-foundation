@@ -63,6 +63,21 @@ or module (e.g., `auth`, `ui`, `core`, `deps`).
 
 ## Setup
 
+### Flutter SDK
+
+This project uses [FVM (Flutter Version Manager)](https://fvm.app/) to pin the Flutter SDK version. The pinned version is defined in [`.fvmrc`](/.fvmrc).
+
+1. Install FVM by following the [FVM installation guide](https://fvm.app/documentation/getting-started/installation).
+2. Install the pinned Flutter SDK version:
+
+   ```sh
+   fvm install
+   ```
+
+3. Use `fvm flutter` instead of `flutter` for all Flutter commands, or configure your IDE to use the FVM-managed SDK (see [FVM IDE configuration](https://fvm.app/documentation/getting-started/configuration)).
+
+### Node.js
+
 Install dev dependencies to enable the commitlint git hook:
 
 ```sh
