@@ -1,1 +1,56 @@
 node_modules/
+
+# Flutter/Dart tool directories
+.dart_tool/
+.pub-cache/
+.pub/
+
+# Flutter plugin files (auto-generated)
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Flutter build artifacts
+build/
+**/ios/Flutter/.last_build_id
+
+# Dart generated files
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+
+# Dart/Flutter coverage
+coverage/
+
+# Android build artifacts
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+/android/.gradle/
+/android/local.properties
+
+# iOS build artifacts
+/ios/Pods/
+/ios/.symlinks/
+/ios/Flutter/Flutter.framework
+/ios/Flutter/Flutter.podspec
+
+# macOS generated files
+/macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Linux generated files
+/linux/flutter/generated_plugin_registrant.cc
+/linux/flutter/generated_plugin_registrant.h
+
+# Windows generated files
+/windows/flutter/generated_plugin_registrant.cc
+/windows/flutter/generated_plugin_registrant.h
+
+# Symbolication and obfuscation
+app.*.symbols
+app.*.map.json
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
