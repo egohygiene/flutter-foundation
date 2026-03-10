@@ -1,0 +1,101 @@
+Repository Readiness Audit
+==========================
+Timestamp : 2026-03-10T18:53:23Z
+Auditor   : @copilot (AI agent)
+Branch    : copilot/perform-repo-readiness-audit
+Purpose   : Pre-Flutter bootstrap readiness check
+
+
+1. REPOSITORY SUMMARY
+---------------------
+State    : Pre-Flutter bootstrap — no Flutter project exists yet.
+Tooling  : Node.js-based dev toolchain (commitlint, husky, semantic-release).
+CI       : Two GitHub Actions workflows — commitlint validation and semantic-release.
+Tags     : v1.6.0 is the latest release tag.
+Submodule: ai/ registered in .gitmodules but not initialised (empty directory).
+
+Key files reviewed:
+  .gitignore              — minimal (node_modules/ only)
+  .gitmodules             — ai submodule via SSH URL
+  .husky/commit-msg       — commitlint hook (npx --no -- commitlint --edit "$1")
+  .releaserc.json         — semantic-release config, angular preset, main branch only
+  commitlint.config.js    — ES module, extends config-conventional, 11 allowed types
+  package.json            — private, type:module, devDependencies only, version 0.0.0
+  CHANGELOG.md            — entries from v1.3.0 through v1.6.0
+  README.md               — documents release workflow and conventional commits
+  CONTRIBUTING.md         — documents commit conventions and local setup
+  .github/workflows/
+    commitlint.yml        — validates commits on push/PR to main
+    release.yml           — runs semantic-release on push to main
+
+
+2. IMPROVEMENTS MADE
+---------------------
+a) CHANGELOG.md — merge conflict artifact removed.
+   A stray `=======` merge conflict separator was present between the v1.5.0
+   and v1.4.0 entries, along with a duplicate introductory sentence. The
+   conflicting lines were removed, restoring a clean, well-formed changelog.
+
+
+3. RECOMMENDED IMPROVEMENTS (not implemented)
+----------------------------------------------
+a) .gitignore is Flutter-unaware.
+   When the Flutter project is bootstrapped, the standard Flutter .gitignore
+   entries should be added (e.g. .dart_tool/, build/, *.g.dart, pubspec.lock
+   for apps, .flutter-plugins, .flutter-plugins-dependencies, etc.).
+   Recommendation: expand .gitignore at Flutter project bootstrap time.
+
+b) ai submodule uses an SSH remote URL (git@github.com:egohygiene/ai.git).
+   SSH URLs require an SSH key to be available in CI. If the GitHub Actions
+   runners do not have the deploy key configured, `git submodule update --init`
+   will fail. Consider switching to the HTTPS URL
+   (https://github.com/egohygiene/ai.git) for CI compatibility, or ensure
+   the appropriate deploy key / PAT is provisioned as a repository secret.
+
+c) ai submodule is not initialised.
+   The ai/ directory is empty. Any workflow rules referenced from
+   ai/factory/workflow/ are not currently accessible. Initialise the
+   submodule (`git submodule update --init`) to make those rules available.
+
+d) CHANGELOG.md missing blank line before v1.3.0 entry.
+   The separator blank line between the v1.4.0 and v1.3.0 sections is absent.
+   This is cosmetic and does not affect functionality; semantic-release will
+   regenerate the file on the next release.
+
+e) package.json version field is 0.0.0.
+   This is intentional for semantic-release-managed repositories (the field
+   is not used for versioning), but it can cause confusion. A comment or note
+   in CONTRIBUTING.md clarifying this may help new contributors.
+
+f) release.yml lacks an explicit id-token or attestation step.
+   For supply-chain integrity, consider adding OIDC-based attestation or
+   Sigstore signing of release artifacts in a future iteration.
+
+g) No branch protection or CODEOWNERS configuration detected.
+   Adding branch protection rules on main (require PR review, require status
+   checks) and a CODEOWNERS file would improve governance before the Flutter
+   project grows in team size.
+
+
+4. NOTES AFFECTING UPCOMING FLUTTER SETUP
+------------------------------------------
+- Flutter SDK is not yet installed or pinned. Decide on a version pinning
+  strategy (fvm, asdf, or a hardcoded version in pubspec.yaml) before
+  bootstrapping the project.
+- The current semantic-release configuration releases only from `main`. If a
+  Flutter project adopts a more branchy workflow (e.g. release/* branches),
+  the branches array in .releaserc.json will need updating.
+- The commitlint type-enum does not include `flutter`-specific scopes; scopes
+  are optional and free-form so no change is required, but team conventions
+  around scope naming (e.g. `ui`, `data`, `core`) should be agreed early.
+- The ai/ submodule must be initialised before any AI factory workflow rules
+  can be read or enforced.
+
+
+5. CONCLUSION
+-------------
+The repository is clean and structurally sound for a pre-Flutter state.
+The only active defect found was the merge conflict artifact in CHANGELOG.md,
+which has been resolved. All remaining items are recommendations for the
+Flutter bootstrap or subsequent iterations. No CI or release workflows were
+broken by this audit.
