@@ -1,13 +1,8 @@
-# CODEOWNERS
-#
-# Defines code ownership and review responsibility.
-# GitHub automatically requests reviews from these owners.
-
-# Default ownership
+# Default owner
 * @szmyty
 
-# CI workflows
-.github/ @szmyty
+# CI and automation
+.github/workflows/ @szmyty
 
 # AI workflow system
 ai/ @szmyty
