@@ -1,0 +1,161 @@
+# =============================================================================
+# Ego Hygiene — Shared CI Environment Setup
+# =============================================================================
+#
+# Location:
+#   .github/actions/setup-environment/action.yml
+#
+# Purpose
+# -------
+# This composite GitHub Action prepares a repository for CI execution.
+# It standardizes the environment used across all workflows in Ego Hygiene
+# repositories.
+#
+# Responsibilities
+# ----------------
+# • Configure SSH for accessing private AI submodules
+# • Checkout the repository with submodules
+# • Setup Node.js (latest LTS)
+# • Enable pnpm using Corepack
+# • Install Node dependencies using pnpm
+# • Setup Flutter (when .fvmrc exists)
+# • Install Flutter dependencies (when pubspec.yaml exists)
+# • Verify installed toolchains for debugging
+#
+# Design Notes
+# ------------
+# - This action intentionally detects project features automatically
+#   (Node / Flutter) so it can be reused across many repository types.
+#
+# - pnpm is used instead of npm because it:
+#     • installs significantly faster
+#     • uses content-addressable storage
+#     • improves CI caching performance
+#
+# - Corepack is used to manage pnpm versions consistently.
+#
+# =============================================================================
+
+name: Setup Environment
+description: Shared CI setup for Ego Hygiene repositories
+
+inputs:
+  ssh-private-key:
+    description: SSH private key used to access private submodules (AI factory)
+    required: true
+
+runs:
+  using: composite
+
+  steps:
+
+    # -------------------------------------------------------------------------
+    # Configure SSH access for private submodules
+    # -------------------------------------------------------------------------
+    - name: Configure SSH agent for private submodules
+      uses: webfactory/ssh-agent@v0.9.1
+      with:
+        ssh-private-key: ${{ inputs.ssh-private-key }}
+
+    # -------------------------------------------------------------------------
+    # Checkout repository
+    # -------------------------------------------------------------------------
+    - name: Checkout repository (with submodules)
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+        persist-credentials: false
+
+    # -------------------------------------------------------------------------
+    # Setup Node.js (only if package.json exists)
+    # -------------------------------------------------------------------------
+    - name: Setup Node.js
+      if: ${{ hashFiles('package.json') != '' }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+        cache: "pnpm"
+
+    # -------------------------------------------------------------------------
+    # Enable pnpm via Corepack
+    # -------------------------------------------------------------------------
+    - name: Enable pnpm via Corepack
+      if: ${{ hashFiles('package.json') != '' }}
+      run: |
+        echo "Enabling Corepack and pnpm..."
+        corepack enable
+        corepack prepare pnpm@latest --activate
+        pnpm --version
+      shell: bash
+
+    # -------------------------------------------------------------------------
+    # Install Node dependencies
+    # -------------------------------------------------------------------------
+    - name: Install Node dependencies (pnpm)
+      if: ${{ hashFiles('package.json') != '' }}
+      run: |
+        echo "Installing Node dependencies with pnpm..."
+        pnpm install --frozen-lockfile
+      shell: bash
+
+    # -------------------------------------------------------------------------
+    # Setup Flutter (when FVM configuration exists)
+    # -------------------------------------------------------------------------
+    - name: Setup Flutter SDK
+      if: ${{ hashFiles('.fvmrc') != '' }}
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version-file: ".fvmrc"
+        cache: true
+
+    # -------------------------------------------------------------------------
+    # Install Flutter dependencies
+    # -------------------------------------------------------------------------
+    - name: Install Flutter dependencies
+      if: ${{ hashFiles('pubspec.yaml') != '' }}
+      run: |
+        echo "Installing Flutter dependencies..."
+        flutter pub get
+      shell: bash
+
+    # -------------------------------------------------------------------------
+    # Toolchain verification
+    # -------------------------------------------------------------------------
+    - name: Verify installed toolchains
+      run: |
+        echo ""
+        echo "====================================="
+        echo "Toolchain Verification"
+        echo "====================================="
+
+        if command -v node >/dev/null 2>&1; then
+          echo ""
+          echo "Node.js:"
+          node --version
+        else
+          echo ""
+          echo "Node.js not detected"
+        fi
+
+        if command -v pnpm >/dev/null 2>&1; then
+          echo ""
+          echo "pnpm:"
+          pnpm --version
+        else
+          echo ""
+          echo "pnpm not detected"
+        fi
+
+        if command -v flutter >/dev/null 2>&1; then
+          echo ""
+          echo "Flutter:"
+          flutter --version
+        else
+          echo ""
+          echo "Flutter not detected"
+        fi
+
+        echo ""
+        echo "Environment setup complete."
+      shell: bash
