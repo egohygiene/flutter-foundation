@@ -1,0 +1,15 @@
+{
+  "name": "flutter-foundation",
+  "version": "0.0.0",
+  "description": "Flutter foundation repository",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.4.3",
+    "@commitlint/config-conventional": "^20.4.3",
+    "husky": "^9.1.7"
+  }
+}
