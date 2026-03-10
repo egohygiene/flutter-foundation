@@ -10,7 +10,7 @@ Commit messages are validated automatically by [commitlint](https://commitlint.j
 ### Format
 
 ```
-<type>[optional scope]: <description>
+[optional emoji] <type>[optional scope]: <description>
 
 [optional body]
 
@@ -44,7 +44,31 @@ feat!: remove deprecated API endpoint
 BREAKING CHANGE: The /v1/users endpoint has been removed. Use /v2/users instead.
 ```
 
+### Emoji Prefixes (optional)
+
+Commit messages may optionally begin with an emoji to improve visual scanning of the commit history.
+The emoji must appear before the conventional commit type and be separated from it by a single space.
+
+| Emoji | Type       | Example                                          |
+| ----- | ---------- | ------------------------------------------------ |
+| ✨    | `feat`     | `✨ feat: add dashboard layout`                  |
+| 🐛    | `fix`      | `🐛 fix: resolve navigation crash`               |
+| 📝    | `docs`     | `📝 docs: update README instructions`            |
+| ♻️    | `refactor` | `♻️ refactor: simplify dependency injection`     |
+| 🎨    | `style`    | `🎨 style: apply consistent indentation`         |
+| ✅    | `test`     | `✅ test: add unit tests for auth module`         |
+| 🔧    | `chore`    | `🔧 chore(deps): update flutter SDK`             |
+| ⚡️   | `perf`     | `⚡️ perf: cache expensive computation`           |
+| 👷    | `ci`       | `👷 ci: configure automated release workflow`    |
+| 🏗️   | `build`    | `🏗️ build: update gradle dependencies`           |
+| ⏪    | `revert`   | `⏪ revert: revert feat(auth) add OAuth2 support` |
+
+Emojis are optional — plain Conventional Commits without an emoji prefix remain valid and are
+preferred when in doubt.
+
 ### Examples
+
+Without emoji:
 
 ```
 feat(auth): add OAuth2 login support
@@ -54,6 +78,18 @@ docs: update setup instructions in README
 refactor(core): extract repository layer from service
 test(auth): add unit tests for token refresh logic
 ci: configure GitHub Actions for automated releases
+```
+
+With emoji:
+
+```
+✨ feat(auth): add OAuth2 login support
+🐛 fix(ui): correct button alignment on small screens
+🔧 chore(deps): update flutter SDK to 3.22.0
+📝 docs: update setup instructions in README
+♻️ refactor(core): extract repository layer from service
+✅ test(auth): add unit tests for token refresh logic
+👷 ci: configure GitHub Actions for automated releases
 ```
 
 ### Scope (optional)
