@@ -1,4 +1,29 @@
-name: Flutter
+# =============================================================================
+# Ego Hygiene — Flutter Continuous Integration
+# =============================================================================
+#
+# Location:
+#   .github/workflows/flutter.yml
+#
+# Purpose
+# -------
+# This workflow runs Flutter CI checks to ensure the repository remains
+# healthy and production-ready.
+#
+# Checks performed:
+#
+# • Flutter environment verification
+# • Code formatting validation
+# • Static analysis
+# • Unit tests
+#
+# The environment setup is handled by the shared composite action located at:
+#
+#   .github/actions/setup-environment/action.yml
+#
+# =============================================================================
+
+name: Flutter CI
 
 on:
   push:
@@ -8,18 +33,42 @@ on:
 
 jobs:
   flutter:
+    name: Flutter Build & Test
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
+
     steps:
-      - uses: webfactory/ssh-agent@v0.9.1
+
+      # -----------------------------------------------------------------------
+      # Setup repository environment
+      # -----------------------------------------------------------------------
+      - name: Setup repository environment
+        uses: ./.github/actions/setup-environment
         with:
-          ssh-private-keys: ${{ secrets.AI_DEPLOY_KEY }}
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version-file: .fvmrc
-          cache: true
-      - run: flutter --version
+          ssh-private-key: ${{ secrets.AI_DEPLOY_KEY }}
+
+      # -----------------------------------------------------------------------
+      # Verify Flutter environment
+      # -----------------------------------------------------------------------
+      - name: Verify Flutter installation
+        run: flutter doctor -v
+
+      # -----------------------------------------------------------------------
+      # Verify code formatting
+      # -----------------------------------------------------------------------
+      - name: Check code formatting
+        run: flutter format --set-exit-if-changed .
+
+      # -----------------------------------------------------------------------
+      # Static analysis
+      # -----------------------------------------------------------------------
+      - name: Run static analysis
+        run: flutter analyze
+
+      # -----------------------------------------------------------------------
+      # Run unit tests
+      # -----------------------------------------------------------------------
+      - name: Run tests
+        run: flutter test
