@@ -63,6 +63,20 @@ or module (e.g., `auth`, `ui`, `core`, `deps`).
 
 ## Setup
 
+### Submodule
+
+This repository uses the [`egohygiene/ai`](https://github.com/egohygiene/ai) Git submodule. After cloning, initialize it with:
+
+```sh
+git submodule update --init --recursive
+```
+
+Or clone with submodules in one step:
+
+```sh
+git clone --recurse-submodules <repo-url>
+```
+
 ### Flutter SDK
 
 This project uses [FVM (Flutter Version Manager)](https://fvm.app/) to pin the Flutter SDK version. The pinned version is defined in [`.fvmrc`](/.fvmrc).
