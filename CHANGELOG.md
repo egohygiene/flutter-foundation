@@ -1,5 +1,12 @@
 # Changelog
 
+# [1.7.0](https://github.com/egohygiene/flutter-foundation/compare/v1.6.0...v1.7.0) (2026-03-10)
+
+
+### Features
+
+* **fvm:** define Flutter SDK version pinning strategy ([322a34d](https://github.com/egohygiene/flutter-foundation/commit/322a34d04cc894ac2fb6ba0ecd54ec3e1fdd735b))
+
 # [1.6.0](https://github.com/egohygiene/flutter-foundation/compare/v1.5.0...v1.6.0) (2026-03-10)
 
 
