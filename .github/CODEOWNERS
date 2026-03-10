@@ -1,0 +1,27 @@
+# CODEOWNERS
+#
+# This file defines ownership and review responsibility for this repository.
+# GitHub automatically requests reviews from the listed owners when a pull
+# request modifies files matching the given pattern.
+#
+# Syntax: <pattern> <owner> [<owner> ...]
+# Patterns follow .gitignore rules; the last matching rule takes precedence.
+# Owners can be GitHub usernames (@user), organization teams (@org/team),
+# or email addresses.
+#
+# Reference: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global default — every file requires review from the repository maintainer
+* @egohygiene
+
+# CI/CD workflows and repository governance
+.github/ @egohygiene
+
+# AI submodule and workflow definitions
+ai/ @egohygiene
+
+# Audit logs
+audits/ @egohygiene
+
+# Documentation
+*.md @egohygiene
