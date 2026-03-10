@@ -1,3 +1,38 @@
+# =============================================================================
+# Ego Hygiene — Copilot Environment Setup
+# =============================================================================
+#
+# Location:
+#   .github/workflows/copilot-setup-steps.yml
+#
+# Purpose
+# -------
+# This workflow prepares the repository environment when GitHub Copilot
+# coding agents operate on the repository.
+#
+# Copilot executes these steps before attempting to modify code so it can
+# correctly understand the repository structure, install dependencies,
+# and validate required configuration.
+#
+# Responsibilities
+# ----------------
+# • Configure SSH access for private AI submodules
+# • Checkout repository with submodules
+# • Validate required repository configuration files
+# • Validate documentation (README + ARCHITECTURE)
+# • Install Node dependencies using pnpm
+# • Install Flutter dependencies when applicable
+# • Validate AI agent directory structure
+# • Verify installed toolchains
+#
+# Design Notes
+# ------------
+# This workflow intentionally remains self-contained rather than calling the
+# shared CI setup action. Copilot environments expect explicit setup steps
+# inside this workflow.
+#
+# =============================================================================
+
 name: Copilot Setup Steps
 
 on:
@@ -8,25 +43,41 @@ on:
   workflow_dispatch:
 
 jobs:
-  copilot-setup-steps:
+  copilot-setup:
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
+
     steps:
-      - name: Configure SSH for private submodules
+
+      # -----------------------------------------------------------------------
+      # Configure SSH for private AI submodules
+      # -----------------------------------------------------------------------
+      - name: Configure SSH agent for private submodules
         uses: webfactory/ssh-agent@v0.9.1
         with:
-          ssh-private-keys: ${{ secrets.AI_DEPLOY_KEY }}
+          ssh-private-key: ${{ secrets.AI_DEPLOY_KEY }}
 
-      - name: Checkout repository with submodules
+      # -----------------------------------------------------------------------
+      # Checkout repository
+      # -----------------------------------------------------------------------
+      - name: Checkout repository (with submodules)
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 0
+          persist-credentials: false
 
+      # -----------------------------------------------------------------------
+      # Validate repository configuration
+      # -----------------------------------------------------------------------
       - name: Validate repository configuration files
         run: |
-          echo "🔍 Validating repository configuration files..."
+          echo "🔍 Validating repository configuration..."
+
           missing=0
+
           for file in commitlint.config.js .releaserc.json package.json; do
             if [ -f "$file" ]; then
               echo "✅ Found: $file"
@@ -35,38 +86,140 @@ jobs:
               missing=1
             fi
           done
+
           if [ "$missing" -eq 1 ]; then
             echo "::error::One or more required configuration files are missing."
             exit 1
           fi
 
-      - name: Set up Node.js
+      # -----------------------------------------------------------------------
+      # Validate documentation
+      # -----------------------------------------------------------------------
+      - name: Validate repository documentation
+        run: |
+          echo "📚 Validating repository documentation..."
+
+          if [ -f "README.md" ]; then
+            echo "✅ README.md found"
+
+            echo ""
+            echo "================ README Preview ================"
+            head -n 40 README.md
+            echo "================================================"
+          else
+            echo "⚠️ README.md not found"
+          fi
+
+          if [ -f "ARCHITECTURE.md" ]; then
+            echo ""
+            echo "✅ ARCHITECTURE.md found"
+
+            echo ""
+            echo "============= ARCHITECTURE Preview ============="
+            head -n 60 ARCHITECTURE.md
+            echo "================================================"
+          else
+            echo ""
+            echo "⚠️ ARCHITECTURE.md not found."
+            echo "Consider generating one using the architecture agent."
+          fi
+
+      # -----------------------------------------------------------------------
+      # Setup Node.js
+      # -----------------------------------------------------------------------
+      - name: Setup Node.js
+        if: ${{ hashFiles('package.json') != '' }}
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: npm
+          cache: "pnpm"
 
-      - name: Install Node.js dependencies
-        run: npm ci
+      # -----------------------------------------------------------------------
+      # Enable pnpm via Corepack
+      # -----------------------------------------------------------------------
+      - name: Enable pnpm
+        if: ${{ hashFiles('package.json') != '' }}
+        run: |
+          echo "Enabling pnpm via Corepack..."
+          corepack enable
+          corepack prepare pnpm@latest --activate
+          pnpm --version
 
-      - name: Set up Flutter SDK
+      # -----------------------------------------------------------------------
+      # Install Node dependencies
+      # -----------------------------------------------------------------------
+      - name: Install Node dependencies
+        if: ${{ hashFiles('package.json') != '' }}
+        run: |
+          echo "Installing Node dependencies with pnpm..."
+          pnpm install --frozen-lockfile
+
+      # -----------------------------------------------------------------------
+      # Setup Flutter (when FVM config exists)
+      # -----------------------------------------------------------------------
+      - name: Setup Flutter SDK
         if: ${{ hashFiles('.fvmrc') != '' }}
         uses: subosito/flutter-action@v2
         with:
-          flutter-version-file: .fvmrc
+          flutter-version-file: ".fvmrc"
           cache: true
 
+      # -----------------------------------------------------------------------
+      # Install Flutter dependencies
+      # -----------------------------------------------------------------------
       - name: Install Flutter dependencies
         if: ${{ hashFiles('pubspec.yaml') != '' }}
-        run: flutter pub get
+        run: |
+          echo "Installing Flutter dependencies..."
+          flutter pub get
 
+      # -----------------------------------------------------------------------
+      # Validate AI factory directory structure
+      # -----------------------------------------------------------------------
       - name: Validate AI agent directories
         run: |
           echo "🤖 Validating AI agent directories..."
-          for dir in ai/factory/workflow ai/factory/templates ai/factory/prompts ai/factory/agents; do
+
+          for dir in \
+            ai/factory/workflow \
+            ai/factory/templates \
+            ai/factory/prompts \
+            ai/factory/agents
+          do
             if [ -d "$dir" ]; then
               echo "✅ Found: $dir"
             else
-              echo "⚠️  Missing: $dir — ensure the ai submodule is initialized and contains this directory"
+              echo "⚠️ Missing: $dir — ensure the AI submodule is initialized."
             fi
           done
+
+      # -----------------------------------------------------------------------
+      # Verify toolchain
+      # -----------------------------------------------------------------------
+      - name: Verify toolchain
+        run: |
+          echo ""
+          echo "====================================="
+          echo "Toolchain Verification"
+          echo "====================================="
+
+          if command -v node >/dev/null 2>&1; then
+            echo ""
+            echo "Node:"
+            node --version
+          fi
+
+          if command -v pnpm >/dev/null 2>&1; then
+            echo ""
+            echo "pnpm:"
+            pnpm --version
+          fi
+
+          if command -v flutter >/dev/null 2>&1; then
+            echo ""
+            echo "Flutter:"
+            flutter --version
+          fi
+
+          echo ""
+          echo "Copilot environment ready."
