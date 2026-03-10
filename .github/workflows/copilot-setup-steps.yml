@@ -1,0 +1,72 @@
+name: Copilot Setup Steps
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Configure SSH for private submodules
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-keys: ${{ secrets.AI_DEPLOY_KEY }}
+
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Validate repository configuration files
+        run: |
+          echo "🔍 Validating repository configuration files..."
+          missing=0
+          for file in commitlint.config.js .releaserc.json package.json; do
+            if [ -f "$file" ]; then
+              echo "✅ Found: $file"
+            else
+              echo "❌ Missing required file: $file"
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "::error::One or more required configuration files are missing."
+            exit 1
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Set up Flutter SDK
+        if: ${{ hashFiles('.fvmrc') != '' }}
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: .fvmrc
+          cache: true
+
+      - name: Install Flutter dependencies
+        if: ${{ hashFiles('pubspec.yaml') != '' }}
+        run: flutter pub get
+
+      - name: Validate AI agent directories
+        run: |
+          echo "🤖 Validating AI agent directories..."
+          for dir in ai/factory/workflow ai/factory/templates ai/factory/prompts ai/factory/agents; do
+            if [ -d "$dir" ]; then
+              echo "✅ Found: $dir"
+            else
+              echo "⚠️  Missing: $dir — ensure the ai submodule is initialized and contains this directory"
+            fi
+          done
