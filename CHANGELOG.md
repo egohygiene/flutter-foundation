@@ -1,5 +1,12 @@
 # Changelog
 
+# [1.6.0](https://github.com/egohygiene/flutter-foundation/compare/v1.5.0...v1.6.0) (2026-03-10)
+
+
+### Features
+
+* **release:** use explicit branch object format in semantic-release config ([13b80a6](https://github.com/egohygiene/flutter-foundation/commit/13b80a6810e53a5e3048eb3601212e70931039e6))
+
 # [1.5.0](https://github.com/egohygiene/flutter-foundation/compare/v1.4.0...v1.5.0) (2026-03-10)
 
 
