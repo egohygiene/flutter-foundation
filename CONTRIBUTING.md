@@ -76,3 +76,24 @@ After installation, the `commit-msg` hook runs automatically on every `git commi
 Versioning and changelog generation are handled by
 [semantic-release](https://semantic-release.gitbook.io/) using the commit history.
 The release configuration is defined in [`.releaserc.json`](.releaserc.json).
+
+### Release Commits
+
+When semantic-release publishes a new version it creates a single automated commit
+with the following format:
+
+```
+chore(release): v<version> [skip ci]
+```
+
+For example:
+
+```
+chore(release): v1.5.0 [skip ci]
+```
+
+Key properties of release commits:
+- **`chore` type** — does not trigger any further version bumps
+- **`release` scope** — clearly identifies the commit as an automated release
+- **`v<version>`** — version with the `v` prefix, consistent with the Git tag format
+- **`[skip ci]`** — prevents CI workflows from re-running on the release commit
