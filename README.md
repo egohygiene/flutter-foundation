@@ -2,6 +2,28 @@
 
 Flutter foundation repository.
 
+## AI Workflow Submodule
+
+This repository includes the [`egohygiene/ai`](https://github.com/egohygiene/ai) repository as a Git submodule at the `ai/` path. The submodule provides AI workflow rules and templates used across the project.
+
+### Initializing the Submodule
+
+When cloning this repository for the first time, initialize and fetch the submodule with:
+
+```sh
+git submodule update --init --recursive
+```
+
+Or clone with submodules included in one step:
+
+```sh
+git clone --recurse-submodules <repo-url>
+```
+
+The `ai/factory/workflow/` directory contains the AI workflow definitions that are available once the submodule is initialized.
+
+> **Note:** CI workflows automatically initialize submodules via `actions/checkout` with `submodules: recursive`. A deploy key (`AI_DEPLOY_KEY`) is used to authenticate SSH access to the private submodule repository.
+
 ## Flutter SDK Version Management
 
 This project uses [FVM (Flutter Version Manager)](https://fvm.app/) to pin the Flutter SDK version, ensuring consistency across developer environments and CI pipelines.
