@@ -1,3 +1,7 @@
+# Changelog
+
+All notable changes to this project will be documented in this file. Changelog entries are generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) using [semantic-release](https://semantic-release.gitbook.io/).
+
 # [1.3.0](https://github.com/egohygiene/flutter-foundation/compare/v1.2.0...v1.3.0) (2026-03-10)
 
 
