@@ -1,0 +1,14 @@
+# Default owner
+* @szmyty
+
+# CI and automation
+.github/workflows/ @szmyty
+
+# AI workflow system
+ai/ @szmyty
+
+# Audit logs
+audits/ @szmyty
+
+# Documentation
+*.md @szmyty
