@@ -1,3 +1,34 @@
+# =============================================================================
+# Ego Hygiene — Automated Release Workflow
+# =============================================================================
+#
+# Location:
+#   .github/workflows/release.yml
+#
+# Purpose
+# -------
+# This workflow performs automated semantic versioning and release
+# generation using semantic-release.
+#
+# It analyzes commit messages following the Conventional Commits standard
+# to determine whether to generate:
+#
+# • patch release
+# • minor release
+# • major release
+#
+# When a release is created, semantic-release will automatically:
+#
+# • generate release notes
+# • publish GitHub releases
+# • update changelogs (if configured)
+#
+# Environment setup is handled by the shared composite action located at:
+#
+#   .github/actions/setup-environment/action.yml
+#
+# =============================================================================
+
 name: Release
 
 on:
@@ -7,24 +38,28 @@ on:
 
 jobs:
   release:
+    name: Semantic Release
     runs-on: ubuntu-latest
+
     permissions:
       contents: write
       issues: write
       pull-requests: write
+
     steps:
-      - uses: webfactory/ssh-agent@v0.9.1
+
+      # -----------------------------------------------------------------------
+      # Setup repository environment
+      # -----------------------------------------------------------------------
+      - name: Setup repository environment
+        uses: ./.github/actions/setup-environment
         with:
-          ssh-private-keys: ${{ secrets.AI_DEPLOY_KEY }}
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          submodules: recursive
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-          cache: npm
-      - run: npm ci
-      - run: npx semantic-release
+          ssh-private-key: ${{ secrets.AI_DEPLOY_KEY }}
+
+      # -----------------------------------------------------------------------
+      # Run semantic-release
+      # -----------------------------------------------------------------------
+      - name: Run semantic-release
+        run: pnpm exec semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
