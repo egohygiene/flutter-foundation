@@ -1,5 +1,17 @@
 # Changelog
 
+# [1.8.0](https://github.com/egohygiene/flutter-foundation/compare/v1.7.0...v1.8.0) (2026-03-10)
+
+
+### Bug Fixes
+
+* remove submodule checkout from commitlint workflow ([4b7908b](https://github.com/egohygiene/flutter-foundation/commit/4b7908b6dd35afd372593490c6acc8de50d994ee))
+
+
+### Features
+
+* add emoji prefix support to Conventional Commits ([6841d3c](https://github.com/egohygiene/flutter-foundation/commit/6841d3c119792aa2e7d1291662a8f5542834523a))
+
 # [1.7.0](https://github.com/egohygiene/flutter-foundation/compare/v1.6.0...v1.7.0) (2026-03-10)
 
 
