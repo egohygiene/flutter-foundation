@@ -1,0 +1,180 @@
+Repository Readiness Audit
+==========================
+Timestamp : 2026-03-10T20:57:44Z
+Auditor   : @copilot (AI agent)
+Branch    : copilot/final-audit-repository-readiness
+Purpose   : Final pre-Flutter bootstrap readiness audit
+
+
+1. SUMMARY
+----------
+The repository is structurally well-formed and contains a complete Node.js-based
+developer toolchain (commitlint, husky, semantic-release), three CI workflows
+(commitlint, flutter, release), Flutter SDK version pinning via FVM (.fvmrc), and
+comprehensive documentation (README.md, CONTRIBUTING.md). The latest automated
+release is v1.7.0 (2026-03-10).
+
+However, three active issues prevent the repository from being considered fully
+green. The most critical is that all three CI workflows currently fail on `main`
+because the `egohygiene/ai` Git submodule repository is not accessible — the
+remote reports "Repository not found". Until that submodule can be cloned
+successfully, the Release and Flutter workflows cannot complete. In addition, a
+non-conventional commit on this PR branch causes the commitlint workflow to fail.
+Finally, five high-severity npm dependency vulnerabilities are present.
+
+Overall readiness status: CONDITIONAL — toolchain and documentation are sound;
+three issues must be addressed before the repository can be declared fully green.
+
+
+2. FILES REVIEWED
+-----------------
+  .fvmrc                            Flutter SDK version pinned to 3.27.4
+  .gitignore                        Comprehensive Flutter + Dart + platform entries
+  .gitmodules                       ai/ submodule registered via SSH URL
+  .husky/commit-msg                 commitlint hook (npx --no -- commitlint --edit "$1")
+  .releaserc.json                   semantic-release, angular preset, main branch only
+  commitlint.config.js              ES module, extends config-conventional, 11 types
+  package.json                      private, type:module, devDependencies only, v0.0.0
+  CHANGELOG.md                      Entries from v1.3.0 through v1.7.0 — clean
+  README.md                         Documents submodule, FVM, release workflow, commits
+  CONTRIBUTING.md                   Commit conventions, emoji guide, setup, version field
+  .github/CODEOWNERS                All paths assigned to @szmyty
+  .github/copilot-instructions.md   Copilot development guidelines
+  .github/workflows/commitlint.yml  Validates commits on push/PR to main
+  .github/workflows/flutter.yml     Runs Flutter SDK checks on push/PR
+  .github/workflows/release.yml     Runs semantic-release on push to main
+
+
+3. FINDINGS
+-----------
+
+FINDING-01 [CRITICAL] — ai submodule repository not found
+  All three CI workflows (commitlint, flutter, release) fail on the main branch.
+  The `egohygiene/ai` submodule is registered at:
+    git@github.com:egohygiene/ai.git
+  During CI checkout with `submodules: recursive`, the runner rewrites the SSH URL
+  to HTTPS and attempts to clone it. The remote responds with:
+    "remote: Repository not found."
+  This error occurs in the Flutter and Release jobs (which request `submodules: recursive`)
+  and prevents those workflows from completing. Root causes may include:
+    a) The egohygiene/ai repository is private and the AI_DEPLOY_KEY secret is not
+       provisioned, expired, or incorrectly scoped.
+    b) The egohygiene/ai repository does not yet exist.
+    c) The AI_DEPLOY_KEY secret is present but the corresponding deploy key has been
+       revoked or was not added to the egohygiene/ai repository with read access.
+  Impact: Release automation and Flutter CI are broken on main until resolved.
+
+FINDING-02 [ACTIVE] — Non-conventional commit on this PR branch
+  The first commit on branch `copilot/final-audit-repository-readiness` has the
+  message "Initial plan", which does not follow the Conventional Commits format.
+  This causes the commitlint CI workflow to fail for this PR with:
+    "subject may not be empty [subject-empty]"
+    "type may not be empty [type-empty]"
+  This finding is self-referential: the audit agent's own initial commit violated
+  the convention. The branch may need its history amended or a fixup commit added
+  before merging.
+
+FINDING-03 [WARNING] — 5 high-severity npm dependency vulnerabilities
+  `npm audit` reports five high-severity vulnerabilities in the installed packages.
+  Root cause: tar <=7.5.9 has "Hardlink Path Traversal via Drive-Relative Linkpath"
+  (GHSA-qffp-2rhf-9h96). The vulnerable tar version is pulled in transitively by:
+    npm → @semantic-release/npm → semantic-release
+  A fix is available via `npm audit fix --force`, but it would install
+  semantic-release@24.2.9 (a breaking change from the currently configured ^25.x).
+  Mitigation: Evaluate whether upgrading to semantic-release@24.2.9 or waiting for
+  a semantic-release@25.x patch that bumps tar is the preferred path.
+
+FINDING-04 [WARNING] — Node.js 20 actions deprecation
+  The following GitHub Actions run on Node.js 20, which will be deprecated by
+  GitHub starting 2 June 2026:
+    actions/checkout@v4
+    actions/setup-node@v4
+    webfactory/ssh-agent@v0.9.1
+  CI emits a deprecation warning on every run. After the deprecation date, these
+  actions will be forced onto Node.js 24, which may cause unexpected failures.
+  Action: Pin each to a newer version tag or SHA that supports Node.js 24 before
+  the June 2026 deadline.
+
+FINDING-05 [MINOR] — CHANGELOG.md missing blank line between v1.4.0 and v1.3.0
+  The blank separator line between the v1.4.0 and v1.3.0 sections is absent:
+    ...# [1.4.0]...\n### Features\n...\n# [1.3.0]...
+  This is cosmetic. semantic-release will regenerate the file on the next release,
+  so no manual fix is required unless linting is added for CHANGELOG format.
+
+
+4. SUGGESTED FIXES
+------------------
+
+FIX-01 — Resolve ai submodule access (addresses FINDING-01)
+  Choose one of the following approaches:
+  Option A (Preferred — SSH deploy key):
+    1. Verify that the egohygiene/ai repository exists and is accessible.
+    2. Generate a new SSH keypair for the deploy key:
+         ssh-keygen -t ed25519 -C "flutter-foundation ci deploy key" -f ai_deploy_key
+    3. Add the public key to the egohygiene/ai repository as a read-only deploy key
+       (Settings → Deploy keys → Add deploy key, read-only access).
+    4. Store the private key as a repository secret in flutter-foundation:
+         Settings → Secrets and variables → Actions → New repository secret
+         Name: AI_DEPLOY_KEY
+    5. Push a trivial commit to main and confirm all three workflows pass.
+  Option B (HTTPS submodule — avoids SSH key management):
+    1. Update .gitmodules to use the HTTPS URL:
+         url = https://github.com/egohygiene/ai.git
+    2. If the repository is private, provision a PAT with read:repo scope as a
+       repository secret and configure the workflow to pass it via:
+         git config --global url."https://<PAT>@github.com/".insteadOf "https://github.com/"
+
+FIX-02 — Amend the non-conventional commit (addresses FINDING-02)
+  Before merging this PR, ensure all commits on the branch follow Conventional Commits.
+  The "Initial plan" commit should be amended or squashed with a conventional message,
+  for example:
+    docs(audit): add final pre-Flutter bootstrap readiness audit log
+
+FIX-03 — Address npm audit vulnerabilities (addresses FINDING-03)
+  Evaluate upgrading semantic-release or waiting for an upstream fix:
+    Option A: Pin semantic-release to a version that ships a non-vulnerable tar.
+    Option B: Add a `npm audit --audit-level=critical` gate to CI so only critical
+              vulnerabilities block the build (demoting high to non-blocking).
+
+FIX-04 — Update GitHub Actions to Node.js 24-compatible versions (addresses FINDING-04)
+  Before June 2026, update each action in the workflows to a tag that supports
+  Node.js 24, or set the environment variable on the workflow:
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  Monitor upstream releases of actions/checkout, actions/setup-node, and
+  webfactory/ssh-agent for Node.js 24-compatible tags.
+
+
+5. POSITIVE OBSERVATIONS
+------------------------
+- .gitignore is comprehensive: covers Dart tools, Flutter plugins, build artifacts,
+  Android/iOS/macOS/Linux/Windows platform directories, FVM SDK, and IDE files.
+  No Flutter-specific entries need to be added at bootstrap time.
+- commitlint.config.js is well-formed: ES module syntax, 11 conventional types,
+  custom headerPattern to support optional emoji prefixes.
+- .releaserc.json is correct: angular preset, custom headerPattern consistent with
+  commitlint, all standard plugins configured, chore(release) commit format with
+  [skip ci] to prevent recursive triggers.
+- CONTRIBUTING.md is thorough: emoji table, type table, scope guidance, submodule
+  setup, FVM setup, and package.json version field explanation.
+- CODEOWNERS assigns @szmyty to all paths including CI workflows, docs, and audits.
+- .fvmrc pins Flutter 3.27.4, ensuring reproducible SDK versions across local and CI.
+- flutter.yml correctly uses the flutter-version-file: .fvmrc parameter, so the SDK
+  version is automatically picked up from .fvmrc without duplication.
+
+
+6. FLUTTER BOOTSTRAP READINESS
+-------------------------------
+Repository ready for Flutter foundation bootstrap: NO
+
+Blocking reasons:
+  1. ai submodule is inaccessible — Release and Flutter CI fail on main (FINDING-01).
+  2. Node.js 20 action deprecation approaching — near-term risk to CI stability (FINDING-04).
+
+Non-blocking (can be resolved in parallel with or after bootstrap):
+  - FINDING-02: commitlint failure on this PR (must be fixed before merging this PR)
+  - FINDING-03: npm vulnerabilities (no release-blocking severity in current CI config)
+  - FINDING-05: cosmetic CHANGELOG formatting
+
+Once FINDING-01 is resolved and all three CI workflows pass on a clean push to main,
+the repository will be ready for Flutter foundation bootstrap.
