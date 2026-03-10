@@ -8,6 +8,10 @@
       "@semantic-release/commit-analyzer",
       {
         "preset": "angular",
+        "parserOpts": {
+          "headerPattern": "^(?:\\S+\\s+)?(\\w*)(?:\\(([\\w$\\.\\-\\*\\/ ]*)\\))?!?:\\s(.*)$",
+          "headerCorrespondence": ["type", "scope", "subject"]
+        },
         "releaseRules": [
           { "type": "feat", "release": "minor" },
           { "type": "fix", "release": "patch" },
@@ -21,6 +25,10 @@
       "@semantic-release/release-notes-generator",
       {
         "preset": "angular",
+        "parserOpts": {
+          "headerPattern": "^(?:\\S+\\s+)?(\\w*)(?:\\(([\\w$\\.\\-\\*\\/ ]*)\\))?!?:\\s(.*)$",
+          "headerCorrespondence": ["type", "scope", "subject"]
+        },
         "presetConfig": {
           "types": [
             { "type": "feat", "section": "Features" },
