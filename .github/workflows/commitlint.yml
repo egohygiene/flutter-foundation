@@ -1,3 +1,28 @@
+# =============================================================================
+# Ego Hygiene — Commit Message Linting
+# =============================================================================
+#
+# Location:
+#   .github/workflows/commitlint.yml
+#
+# Purpose
+# -------
+# This workflow validates commit messages against the repository's
+# Conventional Commit rules using Commitlint.
+#
+# Enforcing commit standards enables:
+#
+# • consistent commit history
+# • automated semantic versioning
+# • changelog generation
+# • semantic-release compatibility
+#
+# The environment setup is handled by the shared composite action located at:
+#
+#   .github/actions/setup-environment/action.yml
+#
+# =============================================================================
+
 name: Commitlint
 
 on:
@@ -8,17 +33,25 @@ on:
 
 jobs:
   commitlint:
+    name: Validate Commit Messages
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       pull-requests: read
+
     steps:
-      - uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # Setup repository environment
+      # -----------------------------------------------------------------------
+      - name: Setup repository environment
+        uses: ./.github/actions/setup-environment
         with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-          cache: npm
-      - run: npm ci
-      - uses: wagoid/commitlint-github-action@v6
+          ssh-private-key: ${{ secrets.AI_DEPLOY_KEY }}
+
+      # -----------------------------------------------------------------------
+      # Run Commitlint
+      # -----------------------------------------------------------------------
+      - name: Run Commitlint
+        uses: wagoid/commitlint-github-action@v6
