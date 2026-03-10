@@ -2,6 +2,29 @@
 
 Flutter foundation repository.
 
+## Flutter SDK Version Management
+
+This project uses [FVM (Flutter Version Manager)](https://fvm.app/) to pin the Flutter SDK version, ensuring consistency across developer environments and CI pipelines.
+
+The active Flutter SDK version is defined in [`.fvmrc`](.fvmrc). All developers and CI workflows use this same version.
+
+### Using FVM Locally
+
+1. Install FVM: see the [FVM installation guide](https://fvm.app/documentation/getting-started/installation).
+2. Run `fvm install` at the project root to install the pinned version.
+3. Use `fvm flutter <command>` (e.g., `fvm flutter run`) or configure your IDE to use the `.fvm/flutter_sdk` path.
+
+### Updating the Flutter SDK Version
+
+1. Update the `flutter` field in `.fvmrc` to the new version.
+2. Run `fvm install` locally to switch to the new version.
+3. Commit the change with an appropriate message, e.g.:
+   ```
+   chore(deps): update Flutter SDK to 3.x.x
+   ```
+
+CI automatically picks up the version defined in `.fvmrc`.
+
 ## Release Workflow
 
 Releases for this repository are generated **automatically** by CI whenever commits are pushed to the `main` branch.

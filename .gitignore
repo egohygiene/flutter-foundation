@@ -54,3 +54,5 @@ app.*.map.json
 *.iml
 *.ipr
 *.iws
+
+.fvm/flutter_sdk/
