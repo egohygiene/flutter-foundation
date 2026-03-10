@@ -12,9 +12,11 @@ jobs:
     permissions:
       contents: read
     steps:
+      - uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-keys: ${{ secrets.AI_DEPLOY_KEY }}
       - uses: actions/checkout@v4
         with:
-          ssh-key: ${{ secrets.AI_DEPLOY_KEY }}
           submodules: recursive
       - uses: subosito/flutter-action@v2
         with:
