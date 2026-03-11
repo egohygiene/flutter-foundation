@@ -138,8 +138,15 @@ jobs:
       # -----------------------------------------------------------------------
       - name: Install Node dependencies
         if: ${{ hashFiles('package.json') != '' }}
-        run: pnpm install --frozen-lockfile --prefer-offline
-
+        run: |
+          if [ -f pnpm-lock.yaml ]; then
+            echo "Lockfile detected, performing reproducible install"
+            pnpm install --frozen-lockfile --prefer-offline
+          else
+            echo "No lockfile detected, generating pnpm-lock.yaml"
+            pnpm install
+          fi
+          
       # -----------------------------------------------------------------------
       # Setup Flutter SDK (when FVM config exists)
       # -----------------------------------------------------------------------
