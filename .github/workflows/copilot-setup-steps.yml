@@ -49,9 +49,9 @@ jobs:
     steps:
 
       # -----------------------------------------------------------------------
-      # Checkout repository with SSH access to private submodules
+      # Checkout repository (with SSH access to private submodules)
       # -----------------------------------------------------------------------
-      - name: Checkout repository (with submodules)
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -84,15 +84,14 @@ jobs:
           fi
 
       # -----------------------------------------------------------------------
-      # Validate documentation
+      # Validate repository documentation
       # -----------------------------------------------------------------------
-      - name: Validate repository documentation
+      - name: Validate documentation
         run: |
           echo "📚 Validating repository documentation..."
 
           if [ -f "README.md" ]; then
             echo "✅ README.md found"
-
             echo ""
             echo "================ README Preview ================"
             head -n 40 README.md
@@ -104,14 +103,13 @@ jobs:
           if [ -f "ARCHITECTURE.md" ]; then
             echo ""
             echo "✅ ARCHITECTURE.md found"
-
             echo ""
             echo "============= ARCHITECTURE Preview ============="
             head -n 60 ARCHITECTURE.md
             echo "================================================"
           else
             echo ""
-            echo "⚠️ ARCHITECTURE.md not found."
+            echo "⚠️ ARCHITECTURE.md not found"
             echo "Consider generating one using the architecture agent."
           fi
 
@@ -126,29 +124,26 @@ jobs:
           cache: pnpm
 
       # -----------------------------------------------------------------------
-      # Enable pnpm via Corepack
+      # Install pnpm
       # -----------------------------------------------------------------------
-      - name: Enable pnpm
+      - name: Install pnpm
         if: ${{ hashFiles('package.json') != '' }}
-        run: |
-          echo "Enabling pnpm via Corepack..."
-          corepack enable
-          corepack prepare pnpm@latest --activate
-          pnpm --version
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+          run_install: false
 
       # -----------------------------------------------------------------------
       # Install Node dependencies
       # -----------------------------------------------------------------------
       - name: Install Node dependencies
         if: ${{ hashFiles('package.json') != '' }}
-        run: |
-          echo "Installing Node dependencies with pnpm..."
-          pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       # -----------------------------------------------------------------------
-      # Setup Flutter SDK (when FVM configuration exists)
+      # Setup Flutter SDK (when FVM config exists)
       # -----------------------------------------------------------------------
-      - name: Setup Flutter SDK
+      - name: Setup Flutter
         if: ${{ hashFiles('.fvmrc') != '' }}
         uses: subosito/flutter-action@v2
         with:
@@ -160,9 +155,7 @@ jobs:
       # -----------------------------------------------------------------------
       - name: Install Flutter dependencies
         if: ${{ hashFiles('pubspec.yaml') != '' }}
-        run: |
-          echo "Installing Flutter dependencies..."
-          flutter pub get
+        run: flutter pub get
 
       # -----------------------------------------------------------------------
       # Validate AI factory directory structure
