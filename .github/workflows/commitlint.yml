@@ -14,11 +14,20 @@ jobs:
       pull-requests: read
 
     steps:
+      # -----------------------------------------------------------------------
+      # Checkout repository
+      # -----------------------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+          persist-credentials: false
+          ssh-key: ${{ secrets.AI_DEPLOY_KEY }}
+          ssh-strict: true
 
       - name: Setup environment
         uses: ./.github/actions/setup-environment
-        with:
-          ssh-private-key: ${{ secrets.AI_DEPLOY_KEY }}
 
       - name: Run commitlint
         uses: wagoid/commitlint-github-action@v6
