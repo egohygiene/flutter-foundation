@@ -1,35 +1,21 @@
 # =============================================================================
-# Ego Hygiene — Copilot Environment Setup
+# Ego Hygiene — Copilot Environment Bootstrap
 # =============================================================================
 #
-# Location:
-#   .github/workflows/copilot-setup-steps.yml
+# This workflow prepares the repository environment when GitHub Copilot agents
+# operate on the repository. It installs all required toolchains, validates
+# repository structure, and ensures dependencies are available before AI
+# agents attempt to modify code.
 #
-# Purpose
-# -------
-# Prepares the repository environment when GitHub Copilot coding agents
-# operate on the repository.
-#
-# Copilot runs this workflow before attempting to modify code so it can:
-#
-# • access private submodules
-# • understand repository documentation
-# • install dependencies
-# • verify toolchains
-#
-# Responsibilities
-# ----------------
-# • Checkout repository with SSH access to private submodules
-# • Validate repository configuration files
-# • Validate documentation (README + ARCHITECTURE)
-# • Install Node dependencies using pnpm
-# • Install Flutter dependencies when applicable
-# • Validate AI factory directory structure
-# • Verify installed toolchains
+# Design goals:
+# • deterministic builds
+# • fast CI via caching
+# • safe template behavior
+# • AI-aware documentation validation
 #
 # =============================================================================
 
-name: Copilot Setup Steps
+name: Copilot Environment Bootstrap
 
 on:
   push:
@@ -39,7 +25,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  copilot-setup:
+  copilot-bootstrap:
     name: Copilot Environment Bootstrap
     runs-on: ubuntu-latest
 
@@ -49,7 +35,7 @@ jobs:
     steps:
 
       # -----------------------------------------------------------------------
-      # Checkout repository (with SSH access to private submodules)
+      # Checkout repository (with private AI submodules)
       # -----------------------------------------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -88,29 +74,22 @@ jobs:
       # -----------------------------------------------------------------------
       - name: Validate documentation
         run: |
-          echo "📚 Validating repository documentation..."
+          echo "📚 Validating documentation..."
 
-          if [ -f "README.md" ]; then
-            echo "✅ README.md found"
-            echo ""
-            echo "================ README Preview ================"
+          if [ -f README.md ]; then
+            echo "✅ README.md detected"
             head -n 40 README.md
-            echo "================================================"
           else
-            echo "⚠️ README.md not found"
+            echo "⚠️ README.md missing"
           fi
 
-          if [ -f "ARCHITECTURE.md" ]; then
+          if [ -f ARCHITECTURE.md ]; then
             echo ""
-            echo "✅ ARCHITECTURE.md found"
-            echo ""
-            echo "============= ARCHITECTURE Preview ============="
+            echo "🏗️ ARCHITECTURE.md detected"
             head -n 60 ARCHITECTURE.md
-            echo "================================================"
           else
             echo ""
-            echo "⚠️ ARCHITECTURE.md not found"
-            echo "Consider generating one using the architecture agent."
+            echo "⚠️ ARCHITECTURE.md missing"
           fi
 
       # -----------------------------------------------------------------------
@@ -135,41 +114,46 @@ jobs:
 
       # -----------------------------------------------------------------------
       # Install Node dependencies
+      # Robust install that supports fresh template repos
       # -----------------------------------------------------------------------
       - name: Install Node dependencies
         if: ${{ hashFiles('package.json') != '' }}
         run: |
           if [ -f pnpm-lock.yaml ]; then
-            echo "Lockfile detected, performing reproducible install"
+            echo "Lockfile detected — reproducible install"
             pnpm install --frozen-lockfile --prefer-offline
           else
-            echo "No lockfile detected, generating pnpm-lock.yaml"
+            echo "No lockfile detected — generating pnpm-lock.yaml"
             pnpm install
           fi
-          
+
       # -----------------------------------------------------------------------
       # Setup Flutter SDK
+      # Using official recommended pattern
       # -----------------------------------------------------------------------
       - name: Setup Flutter
-        if: ${{ hashFiles('pubspec.yaml') != '' }}
         id: flutter-action
+        if: ${{ hashFiles('pubspec.yaml') != '' }}
         uses: subosito/flutter-action@v2
         with:
-          # flutter-version: "3.41.0"
-          architecture: x64
+          channel: stable
+          flutter-version: 3.41.0
           cache: true
-      
+
       # -----------------------------------------------------------------------
-      # Mark Flutter SDK as safe for git
+      # Fix Git safe.directory issue for Flutter SDK
+      # (required due to Git security restrictions)
       # -----------------------------------------------------------------------
       - name: Configure git safe.directory for Flutter
+        if: ${{ hashFiles('pubspec.yaml') != '' }}
         run: |
-          git config --global --add safe.directory ${{ steps.flutter-action.outputs.FLUTTER_ROOT }}
-      
+          git config --global --add safe.directory "${{ steps.flutter-action.outputs['CACHE-PATH'] }}"
+
       # -----------------------------------------------------------------------
-      # Verify Flutter
+      # Verify Flutter installation
       # -----------------------------------------------------------------------
       - name: Verify Flutter
+        if: ${{ hashFiles('pubspec.yaml') != '' }}
         run: flutter --version
 
       # -----------------------------------------------------------------------
@@ -195,7 +179,7 @@ jobs:
             if [ -d "$dir" ]; then
               echo "✅ Found: $dir"
             else
-              echo "⚠️ Missing: $dir — ensure the AI submodule is initialized."
+              echo "⚠️ Missing: $dir — ensure AI submodule is initialized."
             fi
           done
 
@@ -205,27 +189,18 @@ jobs:
       - name: Verify toolchain
         run: |
           echo ""
-          echo "====================================="
-          echo "Toolchain Verification"
-          echo "====================================="
+          echo "================ TOOLCHAIN ================="
 
           if command -v node >/dev/null 2>&1; then
-            echo ""
-            echo "Node:"
-            node --version
+            echo "Node: $(node --version)"
           fi
 
           if command -v pnpm >/dev/null 2>&1; then
-            echo ""
-            echo "pnpm:"
-            pnpm --version
+            echo "pnpm: $(pnpm --version)"
           fi
 
           if command -v flutter >/dev/null 2>&1; then
-            echo ""
-            echo "Flutter:"
-            flutter --version
+            echo "Flutter: $(flutter --version | head -n 1)"
           fi
 
-          echo ""
-          echo "Copilot environment ready."
+          echo "============================================"
