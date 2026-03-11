@@ -148,14 +148,29 @@ jobs:
           fi
           
       # -----------------------------------------------------------------------
-      # Setup Flutter SDK (when FVM config exists)
+      # Setup Flutter SDK
       # -----------------------------------------------------------------------
       - name: Setup Flutter
-        if: ${{ hashFiles('.fvmrc') != '' }}
+        if: ${{ hashFiles('pubspec.yaml') != '' }}
+        id: flutter-action
         uses: subosito/flutter-action@v2
         with:
-          flutter-version-file: ".fvmrc"
+          # flutter-version: "3.41.0"
+          architecture: x64
           cache: true
+      
+      # -----------------------------------------------------------------------
+      # Mark Flutter SDK as safe for git
+      # -----------------------------------------------------------------------
+      - name: Configure git safe.directory for Flutter
+        run: |
+          git config --global --add safe.directory ${{ steps.flutter-action.outputs.FLUTTER_ROOT }}
+      
+      # -----------------------------------------------------------------------
+      # Verify Flutter
+      # -----------------------------------------------------------------------
+      - name: Verify Flutter
+        run: flutter --version
 
       # -----------------------------------------------------------------------
       # Install Flutter dependencies
