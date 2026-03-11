@@ -1,39 +1,12 @@
-# =============================================================================
-# Ego Hygiene — Flutter Continuous Integration
-# =============================================================================
-#
-# Location:
-#   .github/workflows/flutter.yml
-#
-# Purpose
-# -------
-# This workflow runs Flutter CI checks to ensure the repository remains
-# healthy and production-ready.
-#
-# Checks performed:
-#
-# • Flutter environment verification
-# • Code formatting validation
-# • Static analysis
-# • Unit tests
-#
-# The environment setup is handled by the shared composite action located at:
-#
-#   .github/actions/setup-environment/action.yml
-#
-# =============================================================================
-
 name: Flutter CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
 
 jobs:
   flutter:
-    name: Flutter Build & Test
     runs-on: ubuntu-latest
 
     permissions:
@@ -41,34 +14,19 @@ jobs:
 
     steps:
 
-      # -----------------------------------------------------------------------
-      # Setup repository environment
-      # -----------------------------------------------------------------------
-      - name: Setup repository environment
+      - name: Setup environment
         uses: ./.github/actions/setup-environment
         with:
           ssh-private-key: ${{ secrets.AI_DEPLOY_KEY }}
 
-      # -----------------------------------------------------------------------
-      # Verify Flutter environment
-      # -----------------------------------------------------------------------
       - name: Verify Flutter installation
         run: flutter doctor -v
 
-      # -----------------------------------------------------------------------
-      # Verify code formatting
-      # -----------------------------------------------------------------------
-      - name: Check code formatting
+      - name: Check formatting
         run: flutter format --set-exit-if-changed .
 
-      # -----------------------------------------------------------------------
-      # Static analysis
-      # -----------------------------------------------------------------------
-      - name: Run static analysis
+      - name: Static analysis
         run: flutter analyze
 
-      # -----------------------------------------------------------------------
-      # Run unit tests
-      # -----------------------------------------------------------------------
       - name: Run tests
         run: flutter test
