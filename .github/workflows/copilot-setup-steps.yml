@@ -164,22 +164,35 @@ jobs:
         run: flutter pub get
 
       # -----------------------------------------------------------------------
-      # Validate AI factory directory structure
+      # Validate AI factory structure
       # -----------------------------------------------------------------------
-      - name: Validate AI agent directories
+      - name: Validate AI factory structure
         run: |
-          echo "🤖 Validating AI agent directories..."
-
+          echo "🤖 Validating AI factory structure..."
+      
+          # Check if the AI submodule itself exists
+          if [ ! -d "ai" ]; then
+            echo "❌ AI submodule directory missing"
+            exit 1
+          fi
+      
+          # Warn if submodule might not be initialized
+          if [ ! -d "ai/.git" ] && [ ! -f "ai/.git" ]; then
+            echo "⚠️ AI submodule may not be initialized"
+          fi
+      
+          # Validate important directories
           for dir in \
-            ai/factory/workflow \
+            ai/agents \
+            ai/docs \
+            ai/examples \
             ai/factory/templates \
-            ai/factory/prompts \
-            ai/factory/agents
+            ai/factory/workflow
           do
             if [ -d "$dir" ]; then
               echo "✅ Found: $dir"
             else
-              echo "⚠️ Missing: $dir — ensure AI submodule is initialized."
+              echo "⚠️ Missing: $dir"
             fi
           done
 
