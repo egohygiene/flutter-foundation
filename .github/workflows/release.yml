@@ -1,44 +1,11 @@
-# =============================================================================
-# Ego Hygiene — Automated Release Workflow
-# =============================================================================
-#
-# Location:
-#   .github/workflows/release.yml
-#
-# Purpose
-# -------
-# This workflow performs automated semantic versioning and release
-# generation using semantic-release.
-#
-# It analyzes commit messages following the Conventional Commits standard
-# to determine whether to generate:
-#
-# • patch release
-# • minor release
-# • major release
-#
-# When a release is created, semantic-release will automatically:
-#
-# • generate release notes
-# • publish GitHub releases
-# • update changelogs (if configured)
-#
-# Environment setup is handled by the shared composite action located at:
-#
-#   .github/actions/setup-environment/action.yml
-#
-# =============================================================================
-
 name: Release
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   release:
-    name: Semantic Release
     runs-on: ubuntu-latest
 
     permissions:
@@ -48,17 +15,11 @@ jobs:
 
     steps:
 
-      # -----------------------------------------------------------------------
-      # Setup repository environment
-      # -----------------------------------------------------------------------
-      - name: Setup repository environment
+      - name: Setup environment
         uses: ./.github/actions/setup-environment
         with:
           ssh-private-key: ${{ secrets.AI_DEPLOY_KEY }}
 
-      # -----------------------------------------------------------------------
-      # Run semantic-release
-      # -----------------------------------------------------------------------
       - name: Run semantic-release
         run: pnpm exec semantic-release
         env:
