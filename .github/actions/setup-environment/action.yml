@@ -49,18 +49,6 @@ runs:
   steps:
 
     # -----------------------------------------------------------------------
-    # Checkout repository
-    # -----------------------------------------------------------------------
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-        fetch-depth: 0
-        persist-credentials: false
-        ssh-key: ${{ inputs.ssh-private-key }}
-        ssh-strict: true
-
-    # -----------------------------------------------------------------------
     # Setup Node.js
     # -----------------------------------------------------------------------
     - name: Setup Node.js
