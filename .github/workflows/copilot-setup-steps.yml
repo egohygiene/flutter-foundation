@@ -99,7 +99,7 @@ jobs:
         if: ${{ hashFiles('package.json') != '' }}
         uses: actions/setup-node@v6
         with:
-          node-version: lts/*
+          node-version-file: ".nvmrc"
           cache: npm
 
       # -----------------------------------------------------------------------
