@@ -42,13 +42,14 @@ description: Shared CI environment setup for Ego Hygiene repositories
 runs:
   using: composite
   steps:
-
     # -----------------------------------------------------------------------
     # Setup Node.js
     # -----------------------------------------------------------------------
     - name: Setup Node.js
       if: ${{ hashFiles('package.json') != '' }}
       uses: actions/setup-node@v6
+      env:
+        FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       with:
         node-version-file: ".nvmrc"
         cache: npm
@@ -59,6 +60,8 @@ runs:
     - name: Install pnpm
       if: ${{ hashFiles('package.json') != '' }}
       uses: pnpm/action-setup@v4
+      env:
+        FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       with:
         version: latest
         run_install: false
@@ -69,6 +72,8 @@ runs:
     - name: Install Node dependencies
       if: ${{ hashFiles('package.json') != '' }}
       shell: bash
+      env:
+        FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       run: |
         if [ -f pnpm-lock.yaml ]; then
           pnpm install --frozen-lockfile --prefer-offline
