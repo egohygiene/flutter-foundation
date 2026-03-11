@@ -39,11 +39,6 @@
 name: Setup Environment
 description: Shared CI environment setup for Ego Hygiene repositories
 
-inputs:
-  ssh-private-key:
-    description: SSH key used to access private submodules
-    required: false
-
 runs:
   using: composite
   steps:
