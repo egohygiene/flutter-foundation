@@ -37,125 +37,87 @@
 # =============================================================================
 
 name: Setup Environment
-description: Shared CI setup for Ego Hygiene repositories
+description: Shared CI environment setup for Ego Hygiene repositories
 
 inputs:
   ssh-private-key:
-    description: SSH private key used to access private submodules (AI factory)
-    required: true
+    description: SSH key used to access private submodules
+    required: false
 
 runs:
   using: composite
-
   steps:
 
-    # -------------------------------------------------------------------------
-    # Configure SSH access for private submodules
-    # -------------------------------------------------------------------------
-    - name: Configure SSH agent for private submodules
-      uses: webfactory/ssh-agent@v0.9.1
-      with:
-        ssh-private-key: ${{ inputs.ssh-private-key }}
-
-    # -------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     # Checkout repository
-    # -------------------------------------------------------------------------
-    - name: Checkout repository (with submodules)
+    # -----------------------------------------------------------------------
+    - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: recursive
         fetch-depth: 0
         persist-credentials: false
+        ssh-key: ${{ inputs.ssh-private-key }}
+        ssh-strict: true
 
-    # -------------------------------------------------------------------------
-    # Setup Node.js (only if package.json exists)
-    # -------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
+    # Setup Node.js
+    # -----------------------------------------------------------------------
     - name: Setup Node.js
       if: ${{ hashFiles('package.json') != '' }}
       uses: actions/setup-node@v4
       with:
         node-version: lts/*
-        cache: "pnpm"
+        cache: npm
 
-    # -------------------------------------------------------------------------
-    # Enable pnpm via Corepack
-    # -------------------------------------------------------------------------
-    - name: Enable pnpm via Corepack
+    # -----------------------------------------------------------------------
+    # Install pnpm
+    # -----------------------------------------------------------------------
+    - name: Install pnpm
       if: ${{ hashFiles('package.json') != '' }}
-      run: |
-        echo "Enabling Corepack and pnpm..."
-        corepack enable
-        corepack prepare pnpm@latest --activate
-        pnpm --version
-      shell: bash
+      uses: pnpm/action-setup@v4
+      with:
+        version: latest
+        run_install: false
 
-    # -------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     # Install Node dependencies
-    # -------------------------------------------------------------------------
-    - name: Install Node dependencies (pnpm)
+    # -----------------------------------------------------------------------
+    - name: Install Node dependencies
       if: ${{ hashFiles('package.json') != '' }}
-      run: |
-        echo "Installing Node dependencies with pnpm..."
-        pnpm install --frozen-lockfile
       shell: bash
+      run: |
+        if [ -f pnpm-lock.yaml ]; then
+          pnpm install --frozen-lockfile --prefer-offline
+        else
+          pnpm install
+        fi
 
-    # -------------------------------------------------------------------------
-    # Setup Flutter (when FVM configuration exists)
-    # -------------------------------------------------------------------------
-    - name: Setup Flutter SDK
-      if: ${{ hashFiles('.fvmrc') != '' }}
+    # -----------------------------------------------------------------------
+    # Setup Flutter
+    # -----------------------------------------------------------------------
+    - name: Setup Flutter
+      id: flutter-action
+      if: ${{ hashFiles('pubspec.yaml') != '' }}
       uses: subosito/flutter-action@v2
       with:
-        flutter-version-file: ".fvmrc"
+        channel: stable
+        flutter-version: 3.41.0
         cache: true
 
-    # -------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
+    # Configure git safe.directory
+    # -----------------------------------------------------------------------
+    - name: Configure git safe.directory for Flutter
+      if: ${{ hashFiles('pubspec.yaml') != '' }}
+      shell: bash
+      run: |
+        git config --global --add safe.directory "${{ steps.flutter-action.outputs['CACHE-PATH'] }}"
+
+    # -----------------------------------------------------------------------
     # Install Flutter dependencies
-    # -------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     - name: Install Flutter dependencies
       if: ${{ hashFiles('pubspec.yaml') != '' }}
-      run: |
-        echo "Installing Flutter dependencies..."
-        flutter pub get
       shell: bash
-
-    # -------------------------------------------------------------------------
-    # Toolchain verification
-    # -------------------------------------------------------------------------
-    - name: Verify installed toolchains
-      run: |
-        echo ""
-        echo "====================================="
-        echo "Toolchain Verification"
-        echo "====================================="
-
-        if command -v node >/dev/null 2>&1; then
-          echo ""
-          echo "Node.js:"
-          node --version
-        else
-          echo ""
-          echo "Node.js not detected"
-        fi
-
-        if command -v pnpm >/dev/null 2>&1; then
-          echo ""
-          echo "pnpm:"
-          pnpm --version
-        else
-          echo ""
-          echo "pnpm not detected"
-        fi
-
-        if command -v flutter >/dev/null 2>&1; then
-          echo ""
-          echo "Flutter:"
-          flutter --version
-        else
-          echo ""
-          echo "Flutter not detected"
-        fi
-
-        echo ""
-        echo "Environment setup complete."
-      shell: bash
+      run: flutter pub get
