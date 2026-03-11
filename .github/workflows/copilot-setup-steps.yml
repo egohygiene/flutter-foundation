@@ -7,29 +7,25 @@
 #
 # Purpose
 # -------
-# This workflow prepares the repository environment when GitHub Copilot
-# coding agents operate on the repository.
+# Prepares the repository environment when GitHub Copilot coding agents
+# operate on the repository.
 #
-# Copilot executes these steps before attempting to modify code so it can
-# correctly understand the repository structure, install dependencies,
-# and validate required configuration.
+# Copilot runs this workflow before attempting to modify code so it can:
+#
+# • access private submodules
+# • understand repository documentation
+# • install dependencies
+# • verify toolchains
 #
 # Responsibilities
 # ----------------
-# • Configure SSH access for private AI submodules
-# • Checkout repository with submodules
-# • Validate required repository configuration files
+# • Checkout repository with SSH access to private submodules
+# • Validate repository configuration files
 # • Validate documentation (README + ARCHITECTURE)
 # • Install Node dependencies using pnpm
 # • Install Flutter dependencies when applicable
-# • Validate AI agent directory structure
+# • Validate AI factory directory structure
 # • Verify installed toolchains
-#
-# Design Notes
-# ------------
-# This workflow intentionally remains self-contained rather than calling the
-# shared CI setup action. Copilot environments expect explicit setup steps
-# inside this workflow.
 #
 # =============================================================================
 
@@ -44,6 +40,7 @@ on:
 
 jobs:
   copilot-setup:
+    name: Copilot Environment Bootstrap
     runs-on: ubuntu-latest
 
     permissions:
@@ -52,15 +49,7 @@ jobs:
     steps:
 
       # -----------------------------------------------------------------------
-      # Configure SSH for private AI submodules
-      # -----------------------------------------------------------------------
-      - name: Configure SSH agent for private submodules
-        uses: webfactory/ssh-agent@v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.AI_DEPLOY_KEY }}
-
-      # -----------------------------------------------------------------------
-      # Checkout repository
+      # Checkout repository with SSH access to private submodules
       # -----------------------------------------------------------------------
       - name: Checkout repository (with submodules)
         uses: actions/checkout@v4
@@ -68,6 +57,8 @@ jobs:
           submodules: recursive
           fetch-depth: 0
           persist-credentials: false
+          ssh-key: ${{ secrets.AI_DEPLOY_KEY }}
+          ssh-strict: true
 
       # -----------------------------------------------------------------------
       # Validate repository configuration
@@ -132,7 +123,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: "pnpm"
+          cache: pnpm
 
       # -----------------------------------------------------------------------
       # Enable pnpm via Corepack
@@ -155,7 +146,7 @@ jobs:
           pnpm install --frozen-lockfile
 
       # -----------------------------------------------------------------------
-      # Setup Flutter (when FVM config exists)
+      # Setup Flutter SDK (when FVM configuration exists)
       # -----------------------------------------------------------------------
       - name: Setup Flutter SDK
         if: ${{ hashFiles('.fvmrc') != '' }}
