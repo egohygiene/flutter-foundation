@@ -47,7 +47,7 @@ runs:
     # -----------------------------------------------------------------------
     - name: Setup Node.js
       if: ${{ hashFiles('package.json') != '' }}
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
       with:
         node-version-file: ".nvmrc"
         cache: npm
@@ -82,7 +82,7 @@ runs:
     - name: Setup Flutter
       id: flutter-action
       if: ${{ hashFiles('pubspec.yaml') != '' }}
-      uses: subosito/flutter-action@v2
+      uses: subosito/flutter-action@fd55f4c5af5b953cc57a2be44cb082c8f6635e8e # v2.21.0
       with:
         channel: stable
         flutter-version: 3.41.0
