@@ -653,7 +653,7 @@ All workflows check out the repository with `submodules: recursive` and use the 
 `.github/actions/setup-environment/` is a composite action used by `flutter.yml`, `commitlint.yml`, and `release.yml`. It handles:
 
 - Node.js setup (`actions/setup-node`) with version sourced from `.nvmrc`.
-- pnpm installation via `pnpm/action-setup`.
+- pnpm installation via Corepack (`corepack enable pnpm && corepack prepare pnpm@latest --activate`), avoiding any `node20` JS action dependency.
 - Node dependency installation (frozen lockfile when `pnpm-lock.yaml` exists).
 - Flutter SDK setup via `subosito/flutter-action` (version pinned to `.fvmrc`).
 - `git safe.directory` configuration for the Flutter SDK cache path.
@@ -663,16 +663,14 @@ The action auto-detects which toolchains are needed (`hashFiles` guards on `pack
 
 ### Node.js 24 Compatibility
 
-GitHub Actions JavaScript runners are transitioning from Node.js 20 to Node.js 24. All workflows in this repository opt in to Node.js 24 explicitly by setting the `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` environment variable at the workflow level:
+GitHub Actions JavaScript runners are transitioning from Node.js 20 to Node.js 24. All workflows in this repository are fully compatible with Node.js 24:
 
-```yaml
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-```
+- `actions/checkout@v6` and `actions/setup-node@v6` declare `using: node24` natively.
+- `subosito/flutter-action@v2` is a composite (bash-only) action — no Node.js runtime dependency.
+- `wagoid/commitlint-github-action@v6` runs in Docker — no Node.js runtime dependency.
+- pnpm is installed via **Corepack** (`corepack enable pnpm && corepack prepare pnpm@latest --activate`), a Node.js built-in tool, eliminating the need for the `pnpm/action-setup` JavaScript action entirely.
 
-This env var instructs the GitHub Actions runner to execute all JavaScript actions under Node.js 24, even if the action's own metadata declares `using: node20`. The variable is set at the **workflow** `env:` block so that it is inherited by every job step, including steps inside composite actions.
-
-Individual steps inside the `.github/actions/setup-environment` composite action also declare this env var explicitly to keep the action self-contained and compatible when called from workflows that may not set it at the top level.
+All workflows also set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` at the workflow `env:` level as a defensive measure, ensuring any transitively-invoked JavaScript action (e.g., `actions/cache` inside `subosito/flutter-action`) also runs under Node.js 24.
 
 ### Flutter Build Artifacts
 

@@ -48,23 +48,20 @@ runs:
     - name: Setup Node.js
       if: ${{ hashFiles('package.json') != '' }}
       uses: actions/setup-node@v6
-      env:
-        FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       with:
         node-version-file: ".nvmrc"
         cache: npm
 
     # -----------------------------------------------------------------------
-    # Install pnpm
+    # Install pnpm via Corepack (no node20 JS action dependency)
     # -----------------------------------------------------------------------
     - name: Install pnpm
       if: ${{ hashFiles('package.json') != '' }}
-      uses: pnpm/action-setup@v4
-      env:
-        FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      with:
-        version: latest
-        run_install: false
+      shell: bash
+      run: |
+        corepack enable pnpm
+        corepack prepare pnpm@latest --activate
+        pnpm --version
 
     # -----------------------------------------------------------------------
     # Install Node dependencies
@@ -72,8 +69,6 @@ runs:
     - name: Install Node dependencies
       if: ${{ hashFiles('package.json') != '' }}
       shell: bash
-      env:
-        FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       run: |
         if [ -f pnpm-lock.yaml ]; then
           pnpm install --frozen-lockfile --prefer-offline
@@ -88,8 +83,6 @@ runs:
       id: flutter-action
       if: ${{ hashFiles('pubspec.yaml') != '' }}
       uses: subosito/flutter-action@v2
-      env:
-        FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       with:
         channel: stable
         flutter-version: 3.41.0
