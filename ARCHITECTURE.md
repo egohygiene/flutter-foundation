@@ -101,6 +101,7 @@ flutter-foundation/
 │   ├── app.dart                 # Root widget (ProviderScope + MaterialApp.router)
 │   ├── core/                    # Infrastructure layer
 │   │   ├── config/              # Environment configuration (flutter_dotenv)
+│   │   ├── database/            # Drift database schema, DAOs, and initialization
 │   │   ├── di/                  # Dependency injection (get_it + injectable)
 │   │   ├── logging/             # Logging setup (logger)
 │   │   ├── networking/          # HTTP client (dio + pretty_dio_logger)
@@ -143,11 +144,20 @@ flutter-foundation/
 - Exposes a `AppConfig` class (or a typed Riverpod provider) that surfaces values such as `apiBaseUrl`, `logLevel`, and feature flags.
 - `.env` files for each environment (`assets/.env`, `assets/.env.staging`, `assets/.env.production`) should be loaded at startup based on a compile-time flag or build flavor.
 
+#### `core/database/`
+- Houses the `AppDatabase` class: a Drift `@DriftDatabase` definition that lists all table classes.
+- Table definitions are Dart classes annotated with `@DataClassName`.
+- DAO classes are defined here and expose typed query methods to feature repositories.
+- Database initialization (opening the connection, setting the `NativeDatabase` path) is performed in this module.
+- Migrations use Drift's schema versioning support (`MigrationStrategy`).
+- The `AppDatabase` singleton is registered in the DI container from `core/di/` by importing and exposing it via an `@module`.
+
 #### `core/di/`
 - Service locator configured with `get_it` and `injectable`.
 - A single `configureDependencies()` function is called before `runApp()`.
 - Annotate service implementations with `@injectable`, `@singleton`, or `@lazySingleton` as appropriate.
 - The generated `injection.config.dart` file is committed (or regenerated via `build_runner`).
+- Third-party and async dependencies (e.g., `Dio`, `SharedPreferences`, `AppDatabase`) are registered via `@module` classes that import from their respective `core/` sub-modules.
 
 #### `core/logging/`
 - A singleton `AppLogger` wraps the `logger` package.
@@ -289,7 +299,7 @@ A single `@module` class registers third-party dependencies (e.g., `Dio`, `Share
 | `sqlite3_flutter_libs` | Native SQLite3 libraries for all platforms |
 | `shared_preferences` | Key-value store for lightweight preferences |
 
-- Drift databases are defined in `core/` (schema) and accessed from feature repositories.
+- Drift databases are defined in `core/database/` (schema, DAOs, initialization) and accessed from feature repositories.
 - `shared_preferences` is used only for simple settings (theme preference, first-launch flag, etc.).
 
 ### Configuration
@@ -667,15 +677,17 @@ Annotations used:
 
 The DI container and Riverpod coexist: DI manages infrastructure services (repositories, API clients, database); Riverpod manages reactive UI state on top of those services. Feature providers receive services via `ref.watch` on a provider that wraps `getIt<MyService>()`.
 
+The `AppDatabase` instance is defined in `core/database/` and registered as a singleton in the DI container via an `@module` in `core/di/`. Feature repositories receive DAOs through constructor injection — they do not access `AppDatabase` directly.
+
 ---
 
 ## Persistence
 
 ### Drift (SQLite)
 
-- The `AppDatabase` class is defined in `core/di/` (or a dedicated `core/database/` sub-folder).
+- The `AppDatabase` class is defined in `core/database/`.
 - Table definitions are Dart classes annotated with `@DataClassName`.
-- DAOs are injected into feature repositories.
+- DAOs are defined in `core/database/` and injected into feature repositories via DI.
 - Migrations use Drift's schema versioning support (`MigrationStrategy`).
 
 ### Shared Preferences
