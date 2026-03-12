@@ -2,6 +2,12 @@
 
 Flutter foundation repository.
 
+## Architecture
+
+The authoritative design specification for this project is defined in [ARCHITECTURE.md](ARCHITECTURE.md). It covers project structure, layer definitions, the dependency stack, state management, navigation, and all development conventions.
+
+Both human developers and AI agents implementing tasks in this repository should consult `ARCHITECTURE.md` as the primary reference for architectural decisions and implementation guidelines.
+
 ## AI Workflow Submodule
 
 This repository includes the [`egohygiene/ai`](https://github.com/egohygiene/ai) repository as a Git submodule at the `ai/` path. The submodule provides AI workflow rules and templates used across the project.
