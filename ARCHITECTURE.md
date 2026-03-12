@@ -644,8 +644,35 @@ All icons in the application use the Lucide icon set (`LucideIcons.*`). Do not u
 | `flutter.yml` | push/PR to `main` | Install Flutter (via FVM version), run `flutter --version`, and will run `flutter test` and `flutter build` as they are added |
 | `commitlint.yml` | push/PR to `main` | Validate all commit messages against `commitlint.config.js` |
 | `release.yml` | push to `main` | Run `semantic-release` to tag, publish, and update `CHANGELOG.md` |
+| `copilot-setup-steps.yml` | push/PR to `main`, `workflow_dispatch` | Bootstrap the full CI environment for GitHub Copilot agents; validates repo configuration, documentation, toolchain, and AI submodule structure |
 
 All workflows check out the repository with `submodules: recursive` and use the `AI_DEPLOY_KEY` deploy key to access the private `egohygiene/ai` submodule.
+
+### Shared Composite Action
+
+`.github/actions/setup-environment/` is a composite action used by `flutter.yml`, `commitlint.yml`, and `release.yml`. It handles:
+
+- Node.js setup (`actions/setup-node`) with version sourced from `.nvmrc`.
+- pnpm installation via `pnpm/action-setup`.
+- Node dependency installation (frozen lockfile when `pnpm-lock.yaml` exists).
+- Flutter SDK setup via `subosito/flutter-action` (version pinned to `.fvmrc`).
+- `git safe.directory` configuration for the Flutter SDK cache path.
+- Flutter dependency installation via `flutter pub get`.
+
+The action auto-detects which toolchains are needed (`hashFiles` guards on `package.json` and `pubspec.yaml`), making it reusable across Node-only, Flutter-only, and hybrid repositories.
+
+### Node.js 24 Compatibility
+
+GitHub Actions JavaScript runners are transitioning from Node.js 20 to Node.js 24. All workflows in this repository opt in to Node.js 24 explicitly by setting the `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` environment variable at the workflow level:
+
+```yaml
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+```
+
+This env var instructs the GitHub Actions runner to execute all JavaScript actions under Node.js 24, even if the action's own metadata declares `using: node20`. The variable is set at the **workflow** `env:` block so that it is inherited by every job step, including steps inside composite actions.
+
+Individual steps inside the `.github/actions/setup-environment` composite action also declare this env var explicitly to keep the action self-contained and compatible when called from workflows that may not set it at the top level.
 
 ### Flutter Build Artifacts
 

@@ -88,6 +88,8 @@ runs:
       id: flutter-action
       if: ${{ hashFiles('pubspec.yaml') != '' }}
       uses: subosito/flutter-action@v2
+      env:
+        FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       with:
         channel: stable
         flutter-version: 3.41.0
