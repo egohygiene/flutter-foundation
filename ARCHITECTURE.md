@@ -808,6 +808,54 @@ fvm flutter pub run build_runner build --delete-conflicting-outputs
 
 ## Conventions
 
+### Package Name and Namespace
+
+#### Flutter Project Name
+
+The canonical Flutter project name for this template is **`flutter_foundation`**. This value:
+
+- Is set as the `name` field in `pubspec.yaml`.
+- Must follow Dart's `snake_case` package naming rules: all lowercase, underscores as word separators, no hyphens or uppercase letters.
+- Becomes the Dart import prefix: `package:flutter_foundation/...`.
+
+#### Dart Package Namespace
+
+All cross-boundary Dart imports use the package import form:
+
+```dart
+import 'package:flutter_foundation/core/routing/router.dart';
+import 'package:flutter_foundation/shared/theme/app_theme.dart';
+```
+
+Relative imports are used only within the same feature module (see [Imports](#imports)).
+
+#### Application IDs and Bundle Identifiers
+
+The Ego Hygiene reverse-domain prefix is **`com.egohygiene`**. Platform-specific application identifiers follow the pattern `com.egohygiene.<app_name>`:
+
+| Platform | Identifier | Template value |
+|---|---|---|
+| Android (`applicationId` in `build.gradle`) | `com.egohygiene.<app_name>` | `com.egohygiene.flutter_foundation` |
+| iOS / macOS (`CFBundleIdentifier`) | `com.egohygiene.<productName>` (camelCase, no underscores) | `com.egohygiene.flutterFoundation` |
+| Web (PWA `id` / `<title>`) | `com.egohygiene.<app_name>` | `com.egohygiene.flutter_foundation` |
+| Linux (`APPLICATION_ID` in `CMakeLists.txt`) | `com.egohygiene.<app_name>` | `com.egohygiene.flutter_foundation` |
+| Windows (app ID in `CMakeLists.txt`) | `com.egohygiene.<app_name>` | `com.egohygiene.flutter_foundation` |
+
+> **iOS / macOS note:** Apple's `CFBundleIdentifier` permits underscores, but camelCase is the prevailing Apple-ecosystem convention and avoids edge cases in Xcode provisioning and App Store Connect.
+
+#### Naming Rules for Apps Derived from This Template
+
+When a new application is created from `flutter-foundation`:
+
+1. Choose a concise, descriptive `snake_case` product name (e.g., `habit_tracker`).
+2. Set `name: <product_name>` in `pubspec.yaml`.
+3. Set `applicationId "com.egohygiene.<product_name>"` in `android/app/build.gradle`.
+4. Set the Bundle Identifier to `com.egohygiene.<productName>` (camelCase, no underscores — e.g., `com.egohygiene.habitTracker`) in `ios/Runner.xcodeproj` and `macos/Runner.xcodeproj`.
+5. Update `APPLICATION_ID` in `linux/CMakeLists.txt` and the app identifier in `windows/CMakeLists.txt` to `com.egohygiene.<product_name>`.
+6. Update all `package:flutter_foundation/...` imports to `package:<product_name>/...` throughout the codebase.
+
+---
+
 ### File and Directory Naming
 
 - All Dart files use `snake_case`.
