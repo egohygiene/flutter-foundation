@@ -17,21 +17,22 @@
    - [Shared Layer](#shared-layer)
 6. [Dependency Stack](#dependency-stack)
 7. [Application Shell](#application-shell)
-8. [State Management](#state-management)
-9. [Navigation](#navigation)
-10. [Networking](#networking)
-11. [Dependency Injection](#dependency-injection)
-12. [Persistence](#persistence)
-13. [Configuration](#configuration)
-14. [Logging](#logging)
-15. [Responsive Layout](#responsive-layout)
-16. [Dashboard System](#dashboard-system)
-17. [Theming and UI Utilities](#theming-and-ui-utilities)
-18. [CI/CD Integration](#cicd-integration)
-19. [AI Workflow Integration](#ai-workflow-integration)
-20. [Code Generation](#code-generation)
-21. [Developer Workflow](#developer-workflow)
-22. [Conventions](#conventions)
+8. [Feature Module Registration](#feature-module-registration)
+9. [State Management](#state-management)
+10. [Navigation](#navigation)
+11. [Networking](#networking)
+12. [Dependency Injection](#dependency-injection)
+13. [Persistence](#persistence)
+14. [Configuration](#configuration)
+15. [Logging](#logging)
+16. [Responsive Layout](#responsive-layout)
+17. [Dashboard System](#dashboard-system)
+18. [Theming and UI Utilities](#theming-and-ui-utilities)
+19. [CI/CD Integration](#cicd-integration)
+20. [AI Workflow Integration](#ai-workflow-integration)
+21. [Code Generation](#code-generation)
+22. [Developer Workflow](#developer-workflow)
+23. [Conventions](#conventions)
 
 ---
 
@@ -380,6 +381,207 @@ The `AppShell` is a `ShellRoute` child that renders the persistent navigation ch
 - **Tablet / Desktop:** `NavigationRail` (left side) or `NavigationDrawer` (collapsible).
 
 Adaptive behavior is determined by `ResponsiveBreakpoints.of(context)`. The shell hosts a `body` slot that `GoRouter` fills with the current page.
+
+---
+
+## Feature Module Registration
+
+This section defines the canonical pattern for how a feature module registers itself with the core application. Every feature contributes four integration points: routes, Riverpod providers, dependency injection registrations, and a public barrel export.
+
+### Route Registration
+
+Each feature defines its routes as a typed `List<RouteBase>` constant and exposes that list from its barrel file. The core router then merges the lists from every registered feature.
+
+**Step 1 — Define route constants.**
+
+Add the feature's path strings to `core/routing/app_routes.dart`:
+
+```dart
+abstract final class AppRoutes {
+  static const login     = '/login';
+  static const dashboard = '/dashboard';
+  // Add each new feature's paths here
+}
+```
+
+**Step 2 — Declare the feature's routes list.**
+
+Create `features/<feature>/routing/<feature>_routes.dart` and define a top-level `List<RouteBase>`:
+
+```dart
+// features/dashboard/routing/dashboard_routes.dart
+import 'package:go_router/go_router.dart';
+import 'package:flutter_foundation/core/routing/app_routes.dart';
+import '../presentation/pages/dashboard_page.dart';
+import '../presentation/pages/dashboard_detail_page.dart';
+
+final List<RouteBase> dashboardRoutes = [
+  GoRoute(
+    path: AppRoutes.dashboard,
+    builder: (context, state) => const DashboardPage(),
+    routes: [
+      GoRoute(
+        path: ':widgetId',
+        builder: (context, state) => DashboardDetailPage(
+          widgetId: state.pathParameters['widgetId']!,
+        ),
+      ),
+    ],
+  ),
+];
+```
+
+**Step 3 — Register the routes in the core router.**
+
+Merge the feature's route list into the `_featureRoutes` collection in `core/routing/router.dart`:
+
+```dart
+// core/routing/router.dart
+import 'package:flutter_foundation/features/dashboard/dashboard.dart';
+
+final _featureRoutes = [
+  ...dashboardRoutes,
+  // Add each new feature's routes here
+];
+
+final GoRouter _router = GoRouter(
+  routes: [
+    GoRoute(path: '/', redirect: (_, __) => AppRoutes.dashboard),
+    ShellRoute(
+      builder: (context, state, child) => AppShell(child: child),
+      routes: _featureRoutes,
+    ),
+    GoRoute(
+      path: AppRoutes.login,
+      builder: (context, state) => const LoginPage(),
+    ),
+  ],
+  redirect: _authRedirect,
+);
+```
+
+Every feature's routes are isolated inside `_featureRoutes`. The only file that imports feature route lists is `core/routing/router.dart`.
+
+---
+
+### Provider Registration
+
+Feature providers are declared in `features/<feature>/presentation/providers/` using the `@riverpod` annotation. Code generation (via `riverpod_annotation` + `build_runner`) makes them available application-wide — no central registration file is required.
+
+Providers that need to be consumed outside the feature boundary must be re-exported from the feature's barrel file:
+
+```dart
+// features/dashboard/dashboard.dart
+export 'presentation/providers/dashboard_providers.dart';
+```
+
+Cross-feature provider access uses the barrel import:
+
+```dart
+import 'package:flutter_foundation/features/dashboard/dashboard.dart';
+
+// Inside a Consumer, HookConsumerWidget, or another provider:
+final metrics = ref.watch(dashboardMetricsProvider);
+```
+
+Global providers (auth state, theme mode, remote config) live in `core/` or `shared/` and are **not** owned by any single feature.
+
+---
+
+### Dependency Injection Registration
+
+Feature repositories and services register themselves with the `injectable` / `get_it` container by annotating their implementation classes. Use `@LazySingleton(as: IAbstractInterface)` for repositories (created on first access, alive for the app lifetime) and `@injectable` for transient (factory) services that require a new instance per call.
+
+```dart
+// features/dashboard/data/repositories/dashboard_repository_impl.dart
+import 'package:injectable/injectable.dart';
+import '../../domain/repositories/i_dashboard_repository.dart';
+
+@LazySingleton(as: IDashboardRepository)
+class DashboardRepositoryImpl implements IDashboardRepository {
+  DashboardRepositoryImpl(this._apiClient, this._db);
+
+  final DashboardApiClient _apiClient;
+  final AppDatabase _db;
+
+  // ...
+}
+```
+
+After adding or modifying `@injectable` annotations, regenerate `injection.config.dart`:
+
+```sh
+fvm flutter pub run build_runner build --delete-conflicting-outputs
+```
+
+Feature Riverpod providers bridge the DI container and the reactive layer:
+
+```dart
+// features/dashboard/presentation/providers/dashboard_repository_provider.dart
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:get_it/get_it.dart';
+import '../../domain/repositories/i_dashboard_repository.dart';
+
+part 'dashboard_repository_provider.g.dart';
+
+@riverpod
+IDashboardRepository dashboardRepository(DashboardRepositoryRef ref) =>
+    GetIt.I<IDashboardRepository>();
+```
+
+This pattern keeps infrastructure wiring (`get_it`) out of widgets entirely — widgets only interact with Riverpod providers.
+
+---
+
+### Feature Barrel Export
+
+Every feature exposes a single public barrel file at `lib/features/<feature>/<feature>.dart`. This file re-exports only the parts of the feature that are intended to cross its boundary:
+
+```dart
+// features/dashboard/dashboard.dart
+library dashboard;
+
+// Routes
+export 'routing/dashboard_routes.dart';
+
+// Public providers (consumed by other features or the shell)
+export 'presentation/providers/dashboard_providers.dart';
+
+// Domain entities (when consumed by other features)
+export 'domain/entities/dashboard_metric.dart';
+```
+
+The following are **not** re-exported from the barrel file:
+
+- Data transfer objects (`data/models/`)
+- Concrete repository implementations (`data/repositories/`)
+- Internal data sources (`data/sources/`)
+- Feature-private widgets (`presentation/widgets/`)
+
+Code outside the feature imports only via the barrel:
+
+```dart
+import 'package:flutter_foundation/features/dashboard/dashboard.dart';
+```
+
+Deep imports into a feature's internal directories (e.g., `features/dashboard/data/models/dashboard_dto.dart`) are forbidden across feature boundaries.
+
+---
+
+### Registration Checklist (Adding a New Feature)
+
+Complete the following steps in order when integrating a new feature module:
+
+| # | Step | Location |
+|---|------|----------|
+| 1 | Add route path constants | `core/routing/app_routes.dart` |
+| 2 | Create the feature's routes list | `features/<feature>/routing/<feature>_routes.dart` |
+| 3 | Spread the routes list into `_featureRoutes` | `core/routing/router.dart` |
+| 4 | Annotate repository implementations with `@LazySingleton(as: IRepo)` | `features/<feature>/data/repositories/` |
+| 5 | Run `build_runner` to regenerate `injection.config.dart` | project root |
+| 6 | Create a repository bridge provider using `GetIt.I<IRepo>()` | `features/<feature>/presentation/providers/` |
+| 7 | Re-export routes, public providers, and domain entities | `features/<feature>/<feature>.dart` |
+| 8 | Import the barrel file in `core/routing/router.dart` for route access | `core/routing/router.dart` |
 
 ---
 
@@ -796,13 +998,11 @@ fvm flutter pub run build_runner build --delete-conflicting-outputs
 1. Create the directory structure under `lib/features/<feature_name>/`.
 2. Define domain entities (Freezed) and the abstract repository interface.
 3. Implement the data layer (DTO, remote/local data sources, concrete repository).
-4. Register the repository in the DI container with `@injectable`.
-5. Create Riverpod providers in `presentation/providers/` using `@riverpod`.
-6. Build pages and widgets in `presentation/pages/` and `presentation/widgets/`.
-7. Register the feature's routes in `core/routing/router.dart`.
-8. Run `build_runner` to generate updated files.
-9. Write unit tests for use-cases and providers, widget tests for pages.
-10. Commit following the Conventional Commits format.
+4. Follow the [Feature Module Registration](#feature-module-registration) pattern to wire up routes, providers, and DI.
+5. Build pages and widgets in `presentation/pages/` and `presentation/widgets/`.
+6. Run `build_runner` to generate updated files.
+7. Write unit tests for use-cases and providers, widget tests for pages.
+8. Commit following the Conventional Commits format.
 
 ---
 
