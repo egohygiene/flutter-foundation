@@ -26,4 +26,12 @@ When implementing issues:
 • Do not introduce commit formats that violate commitlint rules.
 • Ensure commits allow semantic-release to correctly infer version bumps.
 
+When implementing a feature:
+
+• Check `specs/` for a spec file matching the feature (e.g. `specs/<feature-name>.md`).
+• If a spec exists, read it before writing any code and treat every acceptance criterion as a hard requirement.
+• Do not deviate from the spec without updating the spec first and documenting the reason.
+• After implementation is complete, confirm that all acceptance criteria in the spec are satisfied.
+• Consult `ARCHITECTURE.md` for structural conventions alongside the spec.
+
 If commit rules change in repository configuration, the configuration files must be treated as the source of truth.
