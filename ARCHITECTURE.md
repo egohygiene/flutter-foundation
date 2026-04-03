@@ -30,9 +30,10 @@
 18. [Theming and UI Utilities](#theming-and-ui-utilities)
 19. [CI/CD Integration](#cicd-integration)
 20. [AI Workflow Integration](#ai-workflow-integration)
-21. [Code Generation](#code-generation)
-22. [Developer Workflow](#developer-workflow)
-23. [Conventions](#conventions)
+21. [Spec-Driven Development](#spec-driven-development)
+22. [Code Generation](#code-generation)
+23. [Developer Workflow](#developer-workflow)
+24. [Conventions](#conventions)
 
 ---
 
@@ -96,6 +97,9 @@ flutter-foundation/
 │   └── factory/
 │       ├── workflow/            # AI agent workflow rules
 │       └── templates/           # Issue and PR templates for AI agents
+├── specs/                       # Feature specs — behavior contracts written before implementation
+│   ├── README.md                # Spec workflow documentation
+│   └── _template.md             # Canonical spec template
 ├── lib/
 │   ├── main.dart                # Application entrypoint
 │   ├── app.dart                 # Root widget (ProviderScope + MaterialApp.router)
@@ -948,6 +952,83 @@ Refer to `ai/factory/templates/` for the canonical format of implementation issu
 
 ---
 
+## Spec-Driven Development
+
+Specs are structured Markdown contracts that describe what a feature does before any code is written. They are stored in the [`specs/`](specs/) directory at the repository root and act as the authoritative source of truth for feature behavior.
+
+### Purpose
+
+Specs bridge the gap between a high-level idea (captured in a GitHub Issue) and the structural rules of this document (`ARCHITECTURE.md`):
+
+| Document | Answers |
+|---|---|
+| `specs/<feature>.md` | **What** the feature does — its behavior contract |
+| `ARCHITECTURE.md` | **How** the codebase is structured — layer rules and conventions |
+| GitHub Issue | **Why** and **when** the work is being done |
+| `ai/factory/workflow/` | **How** AI agents execute tasks |
+
+### Spec Lifecycle
+
+```
+draft → approved → implemented
+                 ↘ superseded
+```
+
+| Status | Meaning |
+|---|---|
+| `draft` | Spec is incomplete or under discussion |
+| `approved` | Spec is finalized and ready for implementation |
+| `implemented` | Feature has been shipped; spec is the historical record |
+| `superseded` | Spec was replaced by a newer spec |
+
+### Workflow
+
+```
+Idea / Requirement
+        │
+        ▼
+  Write a Spec          ← specs/<feature>.md
+        │
+        ▼
+  Open a GitHub Issue   ← links to the spec
+        │
+        ▼
+  AI Agent implements   ← reads the spec before writing code
+        │
+        ▼
+  PR review             ← implementation verified against spec
+        │
+        ▼
+  Merge & release       ← spec status updated to "implemented"
+```
+
+1. **Write a spec** — copy `specs/_template.md` to `specs/<feature-name>.md` and define the acceptance criteria before any code is written.
+2. **Open an issue** — reference the spec file in the issue body so agents and reviewers know where the behavior contract lives.
+3. **Implement** — AI agents and developers read the spec first, then follow `ARCHITECTURE.md` for structural conventions.
+4. **Review** — every PR is checked against the spec's acceptance criteria; if behavior diverges, either the code or the spec is corrected.
+5. **Close the loop** — after merge, update the spec's `status` to `implemented` and record the PR number.
+
+### Rules for AI Agents
+
+In addition to the rules in [AI Workflow Integration](#ai-workflow-integration), all agents implementing a feature **must**:
+
+1. Locate and read `specs/<feature-name>.md` before writing any code.
+2. Treat each acceptance criterion in the spec as a hard requirement.
+3. Not deviate from the spec without updating the spec first and noting the reason.
+4. Confirm, at the end of implementation, that all acceptance criteria are satisfied.
+
+### Spec Format
+
+The template at `specs/_template.md` defines the canonical structure. Key sections:
+
+- **Objective** — concise statement of the goal and user problem.
+- **Behavior** — acceptance criteria (checkboxes) and Given/When/Then scenarios.
+- **Non-Goals** — explicit out-of-scope items to prevent scope creep.
+- **Architecture Notes** — pointers to relevant `ARCHITECTURE.md` sections or documented deviations.
+- **References** — links to issues, PRs, and related specs.
+
+---
+
 ## Code Generation
 
 All generated files (`*.g.dart`, `*.freezed.dart`, `injection.config.dart`) are produced by `build_runner`.
@@ -1007,14 +1088,17 @@ fvm flutter pub run build_runner build --delete-conflicting-outputs
 
 ### Adding a New Feature
 
-1. Create the directory structure under `lib/features/<feature_name>/`.
-2. Define domain entities (Freezed) and the abstract repository interface.
-3. Implement the data layer (DTO, remote/local data sources, concrete repository).
-4. Follow the [Feature Module Registration](#feature-module-registration) pattern to wire up routes, providers, and DI.
-5. Build pages and widgets in `presentation/pages/` and `presentation/widgets/`.
-6. Run `build_runner` to generate updated files.
-7. Write unit tests for use-cases and providers, widget tests for pages.
-8. Commit following the Conventional Commits format.
+1. **Write a spec** — create `specs/<feature-name>.md` from `specs/_template.md`. Define the objective, acceptance criteria, and non-goals before writing any code. See [Spec-Driven Development](#spec-driven-development).
+2. **Open an issue** — reference the spec in the issue body so agents and reviewers can find the behavior contract.
+3. Create the directory structure under `lib/features/<feature_name>/`.
+4. Define domain entities (Freezed) and the abstract repository interface.
+5. Implement the data layer (DTO, remote/local data sources, concrete repository).
+6. Follow the [Feature Module Registration](#feature-module-registration) pattern to wire up routes, providers, and DI.
+7. Build pages and widgets in `presentation/pages/` and `presentation/widgets/`.
+8. Run `build_runner` to generate updated files.
+9. Write unit tests for use-cases and providers, widget tests for pages.
+10. Commit following the Conventional Commits format.
+11. **Update spec status** — after the PR merges, set `status: implemented` in the spec frontmatter.
 
 ---
 

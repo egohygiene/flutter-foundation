@@ -8,6 +8,20 @@ The authoritative design specification for this project is defined in [ARCHITECT
 
 Both human developers and AI agents implementing tasks in this repository should consult `ARCHITECTURE.md` as the primary reference for architectural decisions and implementation guidelines.
 
+## Spec-Driven Development
+
+Feature behavior is defined in the [`specs/`](specs/) directory using structured Markdown contracts called **specs**. A spec is written before any implementation begins and serves as the source of truth for what a feature does.
+
+The workflow is:
+
+1. **Write a spec** in `specs/<feature-name>.md` (copy from `specs/_template.md`).
+2. **Open a GitHub Issue** that references the spec.
+3. **Implement** against the spec and `ARCHITECTURE.md`.
+4. **Review** — verify the PR satisfies every acceptance criterion in the spec.
+5. **Update the spec status** to `implemented` after merge.
+
+See [`specs/README.md`](specs/README.md) for the full workflow and the [`ARCHITECTURE.md` Spec-Driven Development section](ARCHITECTURE.md#spec-driven-development) for how specs integrate with the rest of the development process.
+
 ## AI Workflow Submodule
 
 This repository includes the [`egohygiene/ai`](https://github.com/egohygiene/ai) repository as a Git submodule at the `ai/` path. The submodule provides AI workflow rules and templates used across the project.
