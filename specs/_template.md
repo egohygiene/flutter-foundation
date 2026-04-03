@@ -19,13 +19,52 @@ updated: <YYYY-MM-DD>
 
 ---
 
+## Inputs
+
+<!--
+List every input the feature accepts — user actions, external data, API payloads,
+environment values, configuration flags, etc. Use the table below; add rows as needed.
+-->
+
+| Input | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| `<input_name>` | `<type>` | Yes / No | What this input represents and any validation rules. |
+
+---
+
+## Outputs
+
+<!--
+Describe every observable result produced by the feature — return values, UI changes,
+emitted events, side effects, written files, network calls, etc.
+-->
+
+| Output | Type | Description |
+| ------ | ---- | ----------- |
+| `<output_name>` | `<type>` | What is produced and under what conditions. |
+
+---
+
 ## Behavior
 
 <!--
-Describe the feature's behavior using concrete acceptance criteria.
-Prefer Given/When/Then phrasing for scenarios; use bullet lists for simpler criteria.
-Each criterion must be independently verifiable.
+Describe the feature's behavior end-to-end across the subsections below.
+Each acceptance criterion must be independently verifiable.
 -->
+
+### Happy Path
+
+1. <!-- First step -->
+2. <!-- Second step -->
+3. <!-- Subsequent steps… -->
+
+### Edge Cases & Alternate Flows
+
+- **<Scenario name>:** <!-- What happens and why -->
+
+### Error Handling
+
+- **<Error condition>:** <!-- How the system responds — message shown, fallback taken, etc. -->
 
 ### Acceptance Criteria
 
@@ -51,6 +90,21 @@ When   <an action occurs>
 Then   <the expected outcome>
 And    <additional expected outcome>
 ```
+
+---
+
+## Constraints
+
+<!--
+Non-functional requirements and boundaries the implementation must respect.
+Remove lines that are not applicable to this feature.
+-->
+
+- **Performance:** <!-- e.g., response must complete within 500 ms under normal load -->
+- **Security:** <!-- e.g., all inputs must be sanitised before persistence -->
+- **Accessibility:** <!-- e.g., all interactive elements must meet WCAG 2.1 AA -->
+- **Platform:** <!-- e.g., must work on iOS 13+, Android 21+, and Web -->
+- **Dependencies:** <!-- e.g., requires AuthService to be initialised before use -->
 
 ---
 

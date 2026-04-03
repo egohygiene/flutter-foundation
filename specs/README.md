@@ -95,6 +95,73 @@ After the PR merges, update the spec's `status` field from `approved` to `implem
 - One file per feature: `specs/<feature-name>.md`
 - Use `kebab-case` for file names: `specs/user-authentication.md`
 - The `_template.md` file is the canonical starting point and is never itself a spec
+- Files starting with `_` are reserved for meta files (templates, tooling); do not use them for feature specs
+
+---
+
+## Required and Optional Sections
+
+Every spec **must** include the following sections. Optional sections should be included when they add meaningful context; omit them (with a brief note) only when they genuinely do not apply.
+
+| Section | Required | Purpose |
+|---------|----------|---------|
+| YAML frontmatter (`feature`, `status`, `issue`, `pr`, `created`, `updated`) | **Required** | Lifecycle tracking and machine-readable metadata |
+| Feature name heading + one-liner | **Required** | Instant orientation for agents and reviewers |
+| **Objective** | **Required** | 2–4 sentences describing what is built and why |
+| **Inputs** | **Required** | All inputs the feature accepts, with types and validation rules |
+| **Outputs** | **Required** | All observable outputs: return values, UI changes, side effects |
+| **Behavior** → Happy Path | **Required** | Numbered steps for the normal, expected flow |
+| **Behavior** → Edge Cases & Alternate Flows | **Required** | Branching or non-standard scenarios |
+| **Behavior** → Error Handling | **Required** | How failures and invalid states are handled |
+| **Behavior** → Acceptance Criteria | **Required** | Verifiable checkbox list; every item must be independently testable |
+| **Behavior** → Scenarios (Given/When/Then) | Recommended | Formal scenarios for key user-observable behaviors |
+| **Constraints** | **Required** | Non-functional requirements: performance, security, accessibility, platform |
+| **Non-Goals** | **Required** | Explicit list of what this spec does not cover |
+| **Architecture Notes** | Optional | References to ARCHITECTURE.md sections or justified deviations |
+| **References** | Optional | Links to related issues, PRs, specs, or external documents |
+
+---
+
+## Level of Detail
+
+Specs must be **concrete enough to implement from without additional clarification**. Follow these guidelines:
+
+### Behavior descriptions
+
+- Describe what the system does, not how it does it (implementation details live in code).
+- Each step in the Happy Path should map to a discrete, observable action or state change.
+- Write edge cases and error states explicitly; do not assume the implementer will infer them.
+
+### Acceptance criteria
+
+- Every criterion must be **independently verifiable** (by a test, a manual check, or an observable output).
+- Use active voice: "The system displays …", "The widget emits …", "The repository returns …".
+- Avoid vague language like "works correctly", "behaves as expected", or "handles errors gracefully" without elaboration.
+
+### Inputs and outputs
+
+- Include the type, whether the field is required, and any validation rules or constraints.
+- For UI features, describe visible inputs (form fields, taps, gestures) as well as programmatic ones.
+- For outputs, state the exact condition under which each output is produced.
+
+### Constraints
+
+- Quantify performance targets where possible (e.g. "< 200 ms on a Pixel 6").
+- Call out security requirements explicitly even when they seem obvious (e.g. "inputs sanitised before persistence").
+- State the minimum platform/OS version when the feature has platform-specific constraints.
+
+---
+
+## AI Readability
+
+Specs are first-class inputs for AI agents. Write them with machine-readability in mind:
+
+- **Prefer tables and structured lists** over free-form prose wherever possible.
+- **Use exact, consistent terminology**: a term introduced in Inputs must match the term used in Behavior and Acceptance Criteria.
+- **Keep frontmatter complete and accurate**: agents use `status`, `feature`, and `issue` fields to index and filter specs.
+- **Avoid pronouns and implicit references**: write "The `AuthService`" not "it", "the service", or "the thing we built earlier".
+- **One criterion per bullet**: do not bundle multiple testable conditions into a single acceptance criterion line.
+- **Link explicitly**: when referencing ARCHITECTURE.md sections, issues, or other specs, use full relative Markdown links rather than bare names.
 
 ---
 
