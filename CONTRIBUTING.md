@@ -97,6 +97,22 @@ With emoji:
 The scope provides additional context for the change. Use the name of the affected area, package,
 or module (e.g., `auth`, `ui`, `core`, `deps`).
 
+## Feature Specifications
+
+All new features must have a spec before implementation begins. Specs live in the `specs/` directory and follow the conventions documented in [`specs/README.md`](specs/README.md).
+
+In brief:
+
+1. Copy `specs/_template.md` to `specs/<feature-name>.md` (use `kebab-case`).
+2. Fill in every required section (see the [required sections table](specs/README.md#required-and-optional-sections)).
+3. Set `status: draft` in the frontmatter until the spec is ready for review, then `status: approved`.
+4. Reference the spec in the GitHub Issue for the implementation task.
+5. After the PR merges, update `status` to `implemented` and record the PR number.
+
+AI agents read specs before writing any code. A spec that is missing required sections or uses vague language will produce incorrect implementations.
+
+---
+
 ## Setup
 
 ### Submodule
